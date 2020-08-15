@@ -67,16 +67,20 @@ module.exports = function (symbols) {
    
     var array = OpenClose('[', value, ']', (ary) => ({type: types.array, value: ary}))
     
+    //function args can only be a symbols, so don't need to be wrapped.
+    var args = Group(Join(sym, __), (args) => { return args.map(v => v.value)})
+
     //function definitions
-    var args = Join(sym, __)
     var fun = Group(And('{', _, args, _, ';', _, value, _, '}'), function (fun) {
       return {type: types.fun, args: fun[0], body: fun[1], scope: null}
     })
     
-    return Or(string, number, nil, fun, object, array, Group(And(sym, Many(invocation)), function (calls) {
+    return Group(And(Or(string, number, nil, fun, object, array, sym, value), Many(invocation)), function (calls) {
       if(calls.length === 1) return calls[0]
-      return calls.reduce((val, args) => ({type: types.call, value: val, args: args}))
-    }))
+      else
+        return calls.reduce((val, args) => ({type: types.call, value: val, args: args}))
+    })
+    
   }), _, EOF)
 
   return function (src) {
@@ -84,5 +88,4 @@ module.exports = function (symbols) {
     if(~parse(src, 0, src.length, g)) return g[0]
     else throw new Error('could not parse')
   }
-
 }

@@ -7,7 +7,10 @@ var inputs = [
   '[a b c]',
   '"string"',
   '["A" "B" "C"]',
-  '{a; plus(a 1)}'
+  '{a; plus(a 1)}',
+  '{a b; plus(a b)}',
+  '{a; plus(a 1)}(2)',
+  '{x; {y; plus(x y)}}(1)(2)'
 ]
 
 for(var i = 0; i < inputs.length; i++)
