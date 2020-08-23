@@ -1,11 +1,12 @@
 var {And,Or,Maybe,Many,More,Join,Recurse,Group,Text,Expect,EOF}  = require('stack-expression')
 var types = require('./types')
 
-// m-expressions where an alternate form of lisp that they never got around to
+// m-expressions were an alternate form of lisp that they never got around to
 // implementing, but is basically what js, c, and most other languages look like.
 // https://en.wikipedia.org/wiki/M-expression
 
-// except I'm sticking with space separation, adding a 
+// except I'm sticking with space separation
+
 var __ = /^\s+/ //mandatory whitespace
 var _  = /^\s*/ //optional whitespace
 
@@ -16,14 +17,49 @@ function OpenClose (op, item, cl, map) {
   return And(op, _, Group(Maybe(Join(item, __)), map), _, Expect(cl))
 }
 
+function Extend (prefix, extender, reduce) {
+  return function (input, start, end, group) {
+    var acc, n = 0
+    var m = prefix(input, start, end, v => acc = v)
+    if(!~m)return -1
+    while(~m) {
+      g = []
+      n += m
+      m = extender(input, start+n, end, v => acc = reduce(acc, v))
+    }
+    if(acc) group(acc)
+    return n
+  }
+}
+
+
 function Map (rule, mapper) {
   return function (input, start, end, group) {
-    var g = []
-    var m = rule(input, start, end, g)
-    if(~m) group.push(mapper(g[0]))
+    var captured
+    var m = rule(input, start, end, (v) => group(mapper(v)))
     return m
   }
 }
+
+function Infix (rule, type, subrule) {
+  return And(_, rule, _, Map(subrule, function (v) {
+    return {type:type, left: null, right: v}
+  }))
+}
+
+function createCall (fn, args) {
+  if(fn.type === types.symbol) {
+    if(fn.value === types.if) {
+      return {type: fn.value, test: args[0], then: args[1], else: args[2]}
+    }
+    //note: using reduceRight and then switching a and b gives or(a or(b c)) instead of or(or(a b) c)
+    //same difference but should mean less expressions are evaluated
+    else if(fn.value === types.and || fn.value === types.or)
+      return args.reduceRight((a, b) => ({type: fn.value, left: b, right: a}))
+  }
+  return {type: types.call, value: fn, args: args}
+}
+
 
 module.exports = function (symbols) {
   // filename = filename || ''
@@ -31,7 +67,6 @@ module.exports = function (symbols) {
   function $ (str) {
     return symbols[str] = symbols[str] || Symbol(str)
   }
-  
 
   //primitive values
   var nil_token = {type: types.nil, value: null }
@@ -40,7 +75,7 @@ module.exports = function (symbols) {
   function Wrap (name) {
     return Map(json[name], (val) => ({type: types[name], value: val}))
   }
-  var bool   = Wrap('boolean')
+  var boolean   = Wrap('boolean')
   var number = Wrap('number')
   var string = Wrap('string')
 
@@ -74,18 +109,30 @@ module.exports = function (symbols) {
     var fun = Group(And('{', _, args, _, ';', _, value, _, '}'), function (fun) {
       return {type: types.fun, args: fun[0], body: fun[1], scope: null}
     })
-    
-    return Group(And(Or(string, number, nil, fun, object, array, sym, value), Many(invocation)), function (calls) {
-      if(calls.length === 1) return calls[0]
-      else
-        return calls.reduce((val, args) => ({type: types.call, value: val, args: args}))
+
+    var _value = Or(string, number, nil, boolean, fun, object, array, sym, value)
+
+    return Extend(_value, Or(
+        Infix('&', types.and, value),
+        Infix('|', types.or, value),
+        Group(And(_, '?', _, value, _, ':', _, value), (args) => ({type:types.if, left: null, mid: args[0], right:args[1]})),
+        Map(invocation, (args) => ({type: types.call, value: null, args})), 
+      ), (left, right) => {
+        if(right.type === types.call) right.value = left
+        else                          right.left = left
+        return right
     })
-    
+
+    // return Group(_value, Many(invocation)), function (calls) {
+      // if(calls.length === 1) return calls[0]
+      // else return calls.reduce(createCall)
+    // })
+
   }), _, EOF)
 
   return function (src) {
     var g = []
-    if(~parse(src, 0, src.length, g)) return g[0]
+    if(~parse(src, 0, src.length, g.push.bind(g))) return g[0]
     else throw new Error('could not parse')
   }
 }
