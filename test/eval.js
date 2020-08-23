@@ -2,6 +2,8 @@ var assert = require('assert')
 var parse = require('../parse')()
 var ev = require('../eval')
 var inspect = require('util').inspect
+var compile = require('../compile-js')
+
 var inputs = [
   'add(1 2)',
   '{a b; add(a b)}(3 4)',
@@ -36,13 +38,24 @@ var scope = {
   gt: function (a, b) { return a > b }  
 }
 
+function ev_js(src, scope) {
+  with(scope) {
+    return eval(src)
+  }
+}
+
 for(var i = 0; i < inputs.length; i++) {
   if(inputs[i]) {
+    console.log()
     var ast = parse(inputs[i])
     console.log("SRC", inputs[i])
-    console.log("AST", inspect(ast, {colors:true, depth:1000}))
+    console.log("JS ", compile(ast))
+    //console.log("AST", inspect(ast, {colors:true, depth:1000}))
     var v = ev(ast, scope)
     console.log(v)
     assert.equal(v, outputs[i])
+    var js = compile(ast)
+    console.log("JS", compile(ast))
+    assert.equal(ev_js(js, scope), outputs[i])
   }
 }
