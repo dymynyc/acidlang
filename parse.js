@@ -79,10 +79,10 @@ module.exports = function (symbols) {
     )
     
     //object literals
-    var object = OpenClose('{', And(sym, _, ':', _, Expect(value)), Expect('}'), function (pairs) {
+    var object = OpenClose('{', Group(And(sym, _, ':', _, Expect(value))), Expect('}'), function (pairs) {
       var obj = {}
       pairs.forEach(function (kv) {
-        obj[kv[0]] = kv[1]
+        obj[kv[0].value.description] = kv[1]
       })
       return {type: types.object, value: Object.seal(obj)} //prevent adding new fields (but allow mutation of current fields)
     })
