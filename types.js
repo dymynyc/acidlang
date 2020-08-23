@@ -9,5 +9,10 @@ module.exports = {
   number: $('number'),
   boolean: $('boolean'),
   string: $('string'),
-  nil:    $('nil')  
+  nil:    $('nil'),
+  if:     $('if'),
+  and:    $('and'),
+  or:     $('or'),
+  set:    $('set'),
+  def:    $('def')
 }
