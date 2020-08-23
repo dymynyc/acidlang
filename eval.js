@@ -10,8 +10,37 @@ function isPrimitive (node) {
   )
 }
 
+//take a recursive expression and process it as a loop
+//this is much faster and also prevents stack overflows.
+//when we get to compliation we'll compile it like this too.
+function ev_loop(fn, scope) {
+  var test = fn.body.left, update, terminal, not
+
+  if(calls(fn.body.mid, fn.name)) {
+    update = fn.body.mid.args
+    terminal = fn.body.right
+    not = false
+  }
+  else {
+    update = fn.body.right.args
+    terminal = fn.body.mid
+    not = true
+  }
+  while(ev(test, scope) ^ not) {
+    var values = update.map(e => ev(e, scope))
+    for(var i = 0; i < fn.args.length; i++)
+      scope[fn.args[i].description] = values[i]
+  }
+  return ev(terminal, scope)
+}
+
+function calls (node, name) {
+  return node.type === types.call && node.value.type === types.symbol && node.value.value === name
+}
+
 function call (fn, args, scope) {
   //eval with built in function
+  if(!scope) throw new Error('call without scope')
   if(!fn) throw new Error('cannot call undefined')
   if('function' === typeof fn) {
     if(args.length !== fn.length) {
@@ -23,10 +52,17 @@ function call (fn, args, scope) {
   if(args.length !== fn.args.length)
     throw new Error('incorrect number of arguments for:'+inspect(fn, {colors:true})+', got:'+args)
   var _scope = {__proto__: scope}
-  for(var i = 0; i < fn.args.length; i++)
-    _scope[fn.args[i].description] = args[i]
   if(fn.name)
     _scope[fn.name.description] = fn 
+  for(var i = 0; i < fn.args.length; i++)
+    _scope[fn.args[i].description] = args[i]
+
+
+  if(fn.name && fn.body.type === types.if) {
+    console.log('loop?', fn.name, fn.body.type === types.if, calls(fn.body.mid, fn.name), calls(fn.body.right, fn.name))
+    if(calls(fn.body.mid, fn.name) ^ calls(fn.body.right, fn.name)) 
+      return ev_loop(fn, _scope)
+  }
   return ev(fn.body, _scope)
 }
 
@@ -55,13 +91,17 @@ function bind (fn, scope, name) {
 }
 
 function ev (node, scope) {
-  if(!node) throw new Error('null node')
-    if(!scope) throw new Error('missing scope')
+  if(!node)  throw new Error('null node')
+  if(!scope) throw new Error('missing scope')
 
   if(isPrimitive(node)) return node.value
   
-  if(node.type === types.symbol) return scope[node.value.description]
-  
+  if(node.type === types.symbol) {
+    var name = node.value
+    if(!scope[name.description]) throw new Error('variable:'+name.description+' is not defined')
+    return scope[name.description]
+  }
+
   if(node.type === types.call) {
     //usually, this will be a lookup, but it be a function expression!
     var fn = ev(node.value, scope)
@@ -88,12 +128,22 @@ function ev (node, scope) {
   
   if(node.type === types.def) {
     //handle function defs specially, to enable recursion
+    var name = node.left.value
+    if(Object.hasOwnProperty.call(scope, name.description))
+      throw new Error('variable already defined:'+name.descripton+', cannot redefine')
     if(node.right.type === types.fun) {
-      var name = node.left.value
       return scope[name.description] = bind(node.right, scope, name)
     }
     else
       return scope[name.description] = ev(node.right, scope)
+  }
+
+  if(node.type === types.set) {
+    var name = node.left.value
+    //handle function defs specially, to enable recursion
+    if(!scope[name.description])
+      throw new Error('attempted to assign undefined value')
+    return scope[name.description] = ev(node.right, scope)
   }
 
   if(node.type === types.fun)
