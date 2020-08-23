@@ -79,7 +79,7 @@ module.exports = function (symbols) {
     )
     
     //object literals
-    var object = OpenClose('{', And(sym, _, ':', _, value), '}', function (pairs) {
+    var object = OpenClose('{', And(sym, _, ':', _, Expect(value)), Expect('}'), function (pairs) {
       var obj = {}
       pairs.forEach(function (kv) {
         obj[kv[0]] = kv[1]
@@ -89,25 +89,28 @@ module.exports = function (symbols) {
 
     //arrays with square brackets. unlike javascript, don't make this also be property access. avoid ambiguity!
    
-    var array = OpenClose('[', value, ']', (ary) => ({type: types.array, value: ary}))
+    var array = OpenClose('[', value, Expect(']'), (ary) => ({type: types.array, value: ary}))
     
     //function args can only be a symbols, so don't need to be wrapped.
     var args = Group(Maybe(Join(sym, __)), (args) => { return args.map(v => v.value)})
     
     //function definitions
     //something weird was going on trying to define functions with empty body?
-    var fun = Group(And('{', _, args, _, ';', _, Or('}', And(Join(value, __), _, '}'))), function (fun) {
+    var fun = Group(And('{', _, args, _, ';', _, Or('}', And(Join(value, __), _, Expect('}')))), function (fun) {
       return {type: types.fun, args: fun[0], body: fun[1] ? fun[1] : Nil, scope: null, name: null}
     })
 
     var _value = Or(string, number, nil, boolean, fun, object, array, sym, value)
 
+    // used places where a value definitely must happen
+    var expected_value = Expect(value, 'expected acidlisp value')
+
     return Extend(_value, Or(
-        Infix('&', types.and, value),
-        Infix('|', types.or, value),
-        Infix('=', types.set, value),
-        Infix(':', types.def, value),
-        Group(And(_, '?', _, value, _, ';', _, value), (args) => ({type:types.if, left: null, mid: args[0], right:args[1]})),
+        Infix('&', types.and, expected_value),
+        Infix('|', types.or, expected_value),
+        Infix('=', types.set, expected_value),
+        Infix(':', types.def, expected_value),
+        Group(And(_, '?', _, expected_value, _, Expect(';'), _, expected_value), (args) => ({type:types.if, left: null, mid: args[0], right:args[1]})),
         Map(invocation, (args) => ({type: types.call, value: null, args})), 
       ), (left, right) => {
         if(right.type === types.call) right.value = left
