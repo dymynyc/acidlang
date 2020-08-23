@@ -45,7 +45,7 @@ function Map (rule, mapper) {
 function Infix (rule, type, subrule) {
   return And(_, rule, _, Map(subrule, function (v) {
     return {type:type, left: null, right: v}
-  }))
+  }), _)
 }
 
 module.exports = function (symbols) {
@@ -96,7 +96,7 @@ module.exports = function (symbols) {
     
     //function definitions
     //something weird was going on trying to define functions with empty body?
-    var fun = Group(And('{', _, args, _, ';', _, Or('}', And(Join(value, __), _, Expect('}')))), function (fun) {
+    var fun = Group(And('{', _, args, _, ';', _, Or('}', And(Join(value, __), _, Expect('}'))), _), function (fun) {
       return {type: types.fun, args: fun[0], body: fun[1] ? fun[1] : Nil, scope: null, name: null}
     })
 
@@ -110,7 +110,7 @@ module.exports = function (symbols) {
         Infix('|', types.or, expected_value),
         Infix('=', types.set, expected_value),
         Infix(':', types.def, expected_value),
-        Group(And(_, '?', _, expected_value, _, Expect(';'), _, expected_value), (args) => ({type:types.if, left: null, mid: args[0], right:args[1]})),
+        Group(And(_, '?', _, expected_value, _, Expect(';'), _, expected_value, _), (args) => ({type:types.if, left: null, mid: args[0], right:args[1]})),
         Map(invocation, (args) => ({type: types.call, value: null, args})), 
       ), (left, right) => {
         if(right.type === types.call) right.value = left
