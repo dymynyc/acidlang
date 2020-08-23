@@ -58,8 +58,8 @@ function call (fn, args, scope) {
     _scope[fn.args[i].description] = args[i]
 
 
+  //optimization for special case of recursion
   if(fn.name && fn.body.type === types.if) {
-    console.log('loop?', fn.name, fn.body.type === types.if, calls(fn.body.mid, fn.name), calls(fn.body.right, fn.name))
     if(calls(fn.body.mid, fn.name) ^ calls(fn.body.right, fn.name)) 
       return ev_loop(fn, _scope)
   }
