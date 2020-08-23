@@ -1,4 +1,4 @@
-var {And,Or,Maybe,Many,More,Join,Recurse,Group,Text,Expect,EOF}  = require('stack-expression')
+var {And,Or,Maybe,Many,More,Join,Recurse,Group,Text,Expect,EOF,Empty}  = require('stack-expression')
 var types = require('./types')
 
 // m-expressions were an alternate form of lisp that they never got around to
@@ -32,12 +32,13 @@ function Extend (prefix, extender, reduce) {
   }
 }
 
-
 function Map (rule, mapper) {
+  var e = new Error()
   return function (input, start, end, group) {
     var captured
-    var m = rule(input, start, end, (v) => group(mapper(v)))
-    return m
+    return rule(input, start, end, (v) => {
+        return group(mapper(v))
+    })
   }
 }
 
@@ -47,20 +48,6 @@ function Infix (rule, type, subrule) {
   }))
 }
 
-function createCall (fn, args) {
-  if(fn.type === types.symbol) {
-    if(fn.value === types.if) {
-      return {type: fn.value, test: args[0], then: args[1], else: args[2]}
-    }
-    //note: using reduceRight and then switching a and b gives or(a or(b c)) instead of or(or(a b) c)
-    //same difference but should mean less expressions are evaluated
-    else if(fn.value === types.and || fn.value === types.or)
-      return args.reduceRight((a, b) => ({type: fn.value, left: b, right: a}))
-  }
-  return {type: types.call, value: fn, args: args}
-}
-
-
 module.exports = function (symbols) {
   // filename = filename || ''
   symbols = symbols || {__proto__: types}
@@ -69,12 +56,13 @@ module.exports = function (symbols) {
   }
 
   //primitive values
-  var nil_token = {type: types.nil, value: null }
-  var nil = Text(/^nil/, () => nil_token)
+  var Nil = {type: types.nil, value: null }
+  var nil = Text(/^nil/, () => Nil)
 
   function Wrap (name) {
     return Map(json[name], (val) => ({type: types[name], value: val}))
   }
+  
   var boolean   = Wrap('boolean')
   var number = Wrap('number')
   var string = Wrap('string')
@@ -85,8 +73,9 @@ module.exports = function (symbols) {
     //function calls (sneak "assignment" in as special case)
     var invocation = Or(
       //foo.bar=baz is just the same as foo(/bar baz) but only if bar is a literal symbol.
+      And('(', _,')', Group(Empty)), //handle empty args specially
       And('.', _, Group(And(sym, Maybe(And(_, '=', _, value))))),
-      OpenClose('(', value, ')')
+      OpenClose('(', value, ')'),
     )
     
     //object literals
@@ -103,11 +92,12 @@ module.exports = function (symbols) {
     var array = OpenClose('[', value, ']', (ary) => ({type: types.array, value: ary}))
     
     //function args can only be a symbols, so don't need to be wrapped.
-    var args = Group(Join(sym, __), (args) => { return args.map(v => v.value)})
-
+    var args = Group(Maybe(Join(sym, __)), (args) => { return args.map(v => v.value)})
+    
     //function definitions
-    var fun = Group(And('{', _, args, _, ';', _, value, _, '}'), function (fun) {
-      return {type: types.fun, args: fun[0], body: fun[1], scope: null}
+    //something weird was going on trying to define functions with empty body?
+    var fun = Group(And('{', _, args, _, ';', _, Or('}', And(Join(value, __), _, '}'))), function (fun) {
+      return {type: types.fun, args: fun[0], body: fun[1] ? fun[1] : Nil, scope: null, name: null}
     })
 
     var _value = Or(string, number, nil, boolean, fun, object, array, sym, value)
@@ -115,19 +105,15 @@ module.exports = function (symbols) {
     return Extend(_value, Or(
         Infix('&', types.and, value),
         Infix('|', types.or, value),
-        Group(And(_, '?', _, value, _, ':', _, value), (args) => ({type:types.if, left: null, mid: args[0], right:args[1]})),
+        Infix('=', types.set, value),
+        Infix(':', types.def, value),
+        Group(And(_, '?', _, value, _, ';', _, value), (args) => ({type:types.if, left: null, mid: args[0], right:args[1]})),
         Map(invocation, (args) => ({type: types.call, value: null, args})), 
       ), (left, right) => {
         if(right.type === types.call) right.value = left
         else                          right.left = left
         return right
     })
-
-    // return Group(_value, Many(invocation)), function (calls) {
-      // if(calls.length === 1) return calls[0]
-      // else return calls.reduce(createCall)
-    // })
-
   }), _, EOF)
 
   return function (src) {
