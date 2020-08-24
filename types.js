@@ -14,5 +14,7 @@ module.exports = {
   and:    $('and'),
   or:     $('or'),
   set:    $('set'),
-  def:    $('def')
+  def:    $('def'),
+  typesig:$('typesig'),
+  type:   $('type')
 }
