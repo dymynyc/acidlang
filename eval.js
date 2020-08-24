@@ -1,15 +1,6 @@
 var types = require('./types')
 var inspect = require('util').inspect
-
-function isPrimitive (node) {
-  return (
-    node.type === types.number ||
-    node.type === types.string ||
-    node.type === types.boolean ||
-    node.type === types.nil
-  )
-}
-
+var {isPrimitive, bind} = require('./util')
 //take a recursive expression and process it as a loop
 //this is much faster and also prevents stack overflows.
 //when we get to compliation we'll compile it like this too.
@@ -26,7 +17,7 @@ function ev_loop(fn, scope) {
     terminal = fn.body.mid
     not = true
   }
-  while(ev(test, scope) ^ not) {
+  while(ev_ab(test, scope).value ^ not) {
     var values = update.map(e => ev(e, scope))
     for(var i = 0; i < fn.args.length; i++)
       scope[fn.args[i].description] = values[i]
@@ -46,7 +37,8 @@ function call (fn, args, scope) {
     if(args.length !== fn.length) {
       throw new Error('incorrect number of arguments for:'+fn+', got:'+args)
     }
-    return fn.apply(null, args)
+    var _value = fn.apply(null, args.map(v => v.value))
+    return 'boolean' === typeof _value ? {type:types.boolean, value: _value} : {type:types.number, value: _value}
   }
   
   if(args.length !== fn.args.length)
@@ -68,7 +60,7 @@ function call (fn, args, scope) {
 
 function ev_ab(node, scope) {
   var v = ev(node, scope)
-  if(typeof v !== 'boolean') throw new Error('expected boolean')
+  if(v.type !== types.boolean) throw new Error('expected boolean')
   return v
 }
 
@@ -76,25 +68,15 @@ var True = {type: types.boolean, value: true}
 var False = {type: types.boolean, value: true}
 
 function ev_if(a,b,c, scope) {
-    if(ev_ab(a, scope) === true) return ev(b, scope)
-    else return ev(c, scope)  
-}
-
-function bind (fn, scope, name) {
-  return {
-    type: types.fun,
-    args: fn.args,
-    body: fn.body,
-    scope: scope,
-    name: name || null
-  }
+  if(ev_ab(a, scope).value === true) return ev(b, scope)
+  else return ev(c, scope)  
 }
 
 function ev (node, scope) {
   if(!node)  throw new Error('null node')
   if(!scope) throw new Error('missing scope')
 
-  if(isPrimitive(node)) return node.value
+  if(isPrimitive(node)) return node
   
   if(node.type === types.symbol) {
     var name = node.value
@@ -114,9 +96,9 @@ function ev (node, scope) {
   
   if(node.type === types.object) {
     var obj = {}
-    for(var k in types.value)
+    for(var k in node.value)
       obj[k] = ev(node.value[k], scope)
-    return obj
+    return {type: types.object, value: Object.seal(obj)}
   }
   
   if(node.type === types.array) {
