@@ -25,7 +25,7 @@ function compile(node) {
     var exprs = node.map(compile)
     if(vars) {
       var last = exprs.pop()
-      return '(function () {'+vars+'\n'+exprs.join(';\n')+';\nreturn '+last+'\n})()'
+      return '(function () {\n  '+vars+'\n  '+exprs.join(';\n  ')+';\n  return '+last+'\n})()'
     }
     else return exprs.length > 1? '(' + exprs.join(', ')+')' : exprs[0]
   }
