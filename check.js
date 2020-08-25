@@ -101,6 +101,11 @@ function check (node, scope) {
     var fn = check(node.value, scope)
     return call(fn, node.args.map(v => check(v, scope)), scope)
   }
+
+  if(node.type === types.access) {
+    var left = check(node.left, scope)
+    return node.right ? check(node.right, scope) : left.value[node.mid.value.description]
+  }
   
   if(node.type === types.if) {
     assertType(check(node.left, scope), Boolean)
