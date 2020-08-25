@@ -58,10 +58,6 @@ function call (fn, args, scope) {
       throw new Error('incorrect number of arguments')
     for(var i = 0; i < sig.args.length; i++)
       assertType(args[i], sig.args[i])
-    // if(sig.returns.value === null) {
-      // console.log(fn)
-      // throw new Error('unexpected null')
-    // }
     return sig.returns
   }
   if(fn.type === types.fun) {
