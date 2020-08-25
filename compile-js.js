@@ -5,6 +5,10 @@ function args (args) {
 }
 
 function compile(node) {
+  if(Array.isArray(node)) {
+    if(node.length == 1) return compile(node[0])
+    return '(' + node.map(compile).join(', ') + ')'
+  }
   var type = node.type
   if(type === types.boolean)
     return node.value.toString()

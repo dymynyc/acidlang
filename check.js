@@ -2,7 +2,11 @@ var types = require('./types')
 var inspect = require('util').inspect
 var {isPrimitive} = require('./util')
 
+//note: globals object types.
+var object_types = {}
+
 var Boolean = {type: types.type, value: types.boolean}
+
 function assertType(actual, expected) {
   if(actual.type !== types.type)
     throw new Error('expected `actual` to be type object, was:' + inspect(actual))
@@ -24,14 +28,19 @@ function Unknown () {
   return {type: types.type, value: null}
 }
 
+function TypeSig () {
+  return {type: types.typesig, args: null, returns: null}
+}
+
 function bind (fn, scope, name) {
+  fn.sig = TypeSig()
   return {
     type: types.fun,
     args: fn.args,
     body: fn.body,
     scope: scope,
     name: name || null,
-    sig: null
+    sig: fn.sig
   }
 }
 
@@ -40,7 +49,7 @@ function call (fn, args, scope) {
   if(!fn) throw new Error('cannot call undefined')
 
   //check if we have already figured out the types for this function.
-  if(fn.sig) fn = fn.sig
+  if(fn.sig && fn.sig.args && fn.sig.returns) fn = fn.sig
 
   //in eval, fn might be a js function, but here it's a type signature object
   if(fn.type === types.typesig) {
@@ -57,7 +66,10 @@ function call (fn, args, scope) {
   }
   if(fn.type === types.fun) {
     var _scope = {__proto__:scope}
-    var sig = fn.sig = {type: types.typesig, args: fn.args.map(Unknown), returns: Unknown()}
+    var sig = fn.sig
+    //{type: types.typesig, args: fn.args.map(Unknown), returns: Unknown()}
+    sig.args = fn.args.map(Unknown)
+    sig.returns = Unknown()
     for(var i = 0; i < fn.args.length; i++) {
       var name = fn.args[i]
       _scope[name.description] = args[i]
@@ -67,7 +79,6 @@ function call (fn, args, scope) {
     if(fn.name)
       _scope[fn.name.description] = fn
     var v = check(fn.body, _scope)
-    console.log('RESULT', v)
     return sig.returns = v
   }
   throw new Error('unknown call type:'+inspect(fn))
@@ -76,6 +87,13 @@ function call (fn, args, scope) {
 function check (node, scope) {
   if(isPrimitive(node))
     return {type: types.type, value: node.type}
+
+  if(Array.isArray(node)) {
+    var value
+    for(var i = 0; i < node.length; i++)
+      value = check(node[i], scope)
+    return value
+  }
 
   if(node.type === types.symbol) {
     if(!scope[node.value.description])
@@ -106,7 +124,11 @@ function check (node, scope) {
   }
   
   if(node.type === types.object) {
-    throw new Error('type checks for objects not yet implemented')
+    //throw new Error('type checks for objects not yet implemented')
+    var obj = {}
+    for(var k in node.value)
+      obj[k] = check(node.value[k], scope)
+    return {type: types.type, value: obj}
   }
   if(node.type === types.array) {
     //an array of whatever

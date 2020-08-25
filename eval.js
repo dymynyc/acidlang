@@ -77,6 +77,12 @@ function ev (node, scope) {
   if(!scope) throw new Error('missing scope')
 
   if(isPrimitive(node)) return node
+
+  if(Array.isArray(node)) {
+    for(var i = 0;i < node.length; i++)
+      value = ev(node[i], scope)
+    return value
+  }
   
   if(node.type === types.symbol) {
     var name = node.value
