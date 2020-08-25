@@ -120,15 +120,15 @@ module.exports = function (symbols) {
     // used places where a value definitely must happen
     var expected_value = Expect(value, 'expected acidlisp value')
 
-    return Extend(_value, Or(
+    return Extend(_value, And(_, Or(
         Infix('&', types.and, expected_value),
         Infix('|', types.or,  expected_value),
         Infix('=', types.set, expected_value),
         Infix(':', types.def, expected_value),
-        Group(And(_, '?', _, expected_value, _, Expect(';'), _, expected_value, _), (args) => ({type:types.if, left: null, mid: args[0], right:args[1]})),
+        Group(And('?', _, expected_value, _, Expect(';'), _, expected_value), (args) => ({type:types.if, left: null, mid: args[0], right:args[1]})),
         Map(invocation, (args) => ({type: types.call, value: null, args})), 
         Map(access, (args) => ({type: types.access, left: null, mid: args[0], right: args[1] || null}))
-      ), (left, right) => {
+      )), (left, right) => {
         if(right.type === types.call) right.value = left
         else                          right.left = left
         return right
