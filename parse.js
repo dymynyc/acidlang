@@ -45,7 +45,7 @@ function Map (rule, mapper) {
 function Infix (rule, type, subrule) {
   return And(_, rule, _, Map(subrule, function (v) {
     return {type:type, left: null, right: v}
-  }), _)
+  }))
 }
 
 module.exports = function (symbols) {
@@ -69,7 +69,7 @@ module.exports = function (symbols) {
 
   var sym = Text(/^[a-zA-Z_][a-zA-Z0-9_]*/, (text) => ({type: types.symbol, value: $(text) }))
 
-  var parse = And(_, Recurse (function (value) {
+  var value = Recurse (function (value) {
     //function calls (sneak "assignment" in as special case)
     var invocation = Or(
       //foo.bar=baz is just the same as foo(/bar baz) but only if bar is a literal symbol.
@@ -96,7 +96,7 @@ module.exports = function (symbols) {
     
     //function definitions
     //something weird was going on trying to define functions with empty body?
-    var fun = Group(And('{', _, args, _, ';', _, Or('}', And(Join(value, __), _, Expect('}'))), _), function (fun) {
+    var fun = Group(And('{', _, args, _, ';', _, Or('}', And(Group(Join(value, __)), _, Expect('}'))), _), function (fun) {
       return {type: types.fun, args: fun[0], body: fun[1] ? fun[1] : Nil, scope: null, name: null}
     })
 
@@ -117,11 +117,13 @@ module.exports = function (symbols) {
         else                          right.left = left
         return right
     })
-  }), _, EOF)
+  })
+
+  var _parse = And(_, Group(Join(value, __)), _, EOF)
 
   return function (src) {
     var g = []
-    if(~parse(src, 0, src.length, g.push.bind(g))) return g[0]
+    if(~_parse(src, 0, src.length, g.push.bind(g))) return g
     else throw new Error('could not parse')
   }
 }
