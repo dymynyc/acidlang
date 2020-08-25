@@ -16,5 +16,6 @@ module.exports = {
   set:    $('set'),
   def:    $('def'),
   typesig:$('typesig'),
-  type:   $('type')
+  type:   $('type'),
+  access: $('access')
 }

@@ -32,20 +32,26 @@ function Extend (prefix, extender, reduce) {
   }
 }
 
-function Map (rule, mapper) {
+function Map (rule, mapper, type) {
   var e = new Error()
   return function (input, start, end, group) {
-    var captured
-    return rule(input, start, end, (v) => {
-        return group(mapper(v))
-    })
+    //var captured
+//    try {
+    console.log("map", type, input.substring(0, start)+'>'+input.substring(start, end))
+    return rule(input, start, end, (v) => {group(mapper(v))})
+    // } catch(err) {
+      
+      // console.log('created at:')
+      // console.log(err)
+      // throw err
+    // }
   }
 }
 
 function Infix (rule, type, subrule) {
   return And(_, rule, _, Map(subrule, function (v) {
     return {type:type, left: null, right: v}
-  }))
+  }, type))
 }
 
 module.exports = function (symbols) {
@@ -60,12 +66,12 @@ module.exports = function (symbols) {
   var nil = Text(/^nil/, () => Nil)
 
   function Wrap (name) {
-    return Map(json[name], (val) => ({type: types[name], value: val}))
+    return Map(json[name], (val) => ({type: types[name], value: val}), name)
   }
   
-  var boolean   = Wrap('boolean')
-  var number = Wrap('number')
-  var string = Wrap('string')
+  var boolean = Wrap('boolean')
+  var number  = Wrap('number')
+  var string  = Wrap('string')
 
   var sym = Text(/^[a-zA-Z_][a-zA-Z0-9_]*/, (text) => ({type: types.symbol, value: $(text) }))
 
@@ -74,9 +80,10 @@ module.exports = function (symbols) {
     var invocation = Or(
       //foo.bar=baz is just the same as foo(/bar baz) but only if bar is a literal symbol.
       And('(', _,')', Group(Empty)), //handle empty args specially
-      And('.', _, Group(And(sym, Maybe(And(_, '=', _, value))))),
       OpenClose('(', value, ')'),
     )
+    
+    var access = And('.', _, Group(And(sym, Maybe(And(_, '=', _, value)))))
     
     //object literals
     var object = OpenClose('{', Group(And(sym, _, ':', _, Expect(value))), Expect('}'), function (pairs) {
@@ -96,7 +103,15 @@ module.exports = function (symbols) {
     
     //function definitions
     //something weird was going on trying to define functions with empty body?
-    var fun = Group(And('{', _, args, _, ';', _, Or('}', And(Group(Join(value, __)), _, Expect('}'))), _), function (fun) {
+    var fun = Group(
+      And(
+        '{', _, args, _, ';', _,
+        Or(
+          '}',
+          And(Group(Join(value, __)), _, Expect('}'))
+        )
+      ),
+      function (fun) {
       return {type: types.fun, args: fun[0], body: fun[1] ? fun[1] : Nil, scope: null, name: null}
     })
 
@@ -107,11 +122,12 @@ module.exports = function (symbols) {
 
     return Extend(_value, Or(
         Infix('&', types.and, expected_value),
-        Infix('|', types.or, expected_value),
+        Infix('|', types.or,  expected_value),
         Infix('=', types.set, expected_value),
         Infix(':', types.def, expected_value),
         Group(And(_, '?', _, expected_value, _, Expect(';'), _, expected_value, _), (args) => ({type:types.if, left: null, mid: args[0], right:args[1]})),
         Map(invocation, (args) => ({type: types.call, value: null, args})), 
+        Map(access, (args) => ({type: types.access, left: null, mid: args[0], right: args[1] || null}))
       ), (left, right) => {
         if(right.type === types.call) right.value = left
         else                          right.left = left
@@ -119,7 +135,7 @@ module.exports = function (symbols) {
     })
   })
 
-  var _parse = And(_, Group(Join(value, __)), _, EOF)
+  var _parse = And(_, Join(value, __), _, EOF)
 
   return function (src) {
     var g = []

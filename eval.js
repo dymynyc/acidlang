@@ -119,11 +119,8 @@ function ev (node, scope) {
     var name = node.left.value
     if(Object.hasOwnProperty.call(scope, name.description))
       throw new Error('variable already defined:'+name.descripton+', cannot redefine')
-    if(node.right.type === types.fun) {
-      return scope[name.description] = bind(node.right, scope, name)
-    }
-    else
-      return scope[name.description] = ev(node.right, scope)
+    return scope[name.description] = 
+      node.right.type === types.fun ? bind(node.right, scope, name) : ev(node.right, scope)
   }
 
   if(node.type === types.set) {
@@ -132,6 +129,20 @@ function ev (node, scope) {
     if(!scope[name.description])
       throw new Error('attempted to assign undefined value')
     return scope[name.description] = ev(node.right, scope)
+  }
+
+  if(node.type === types.access) {
+    var left = ev(node.left, scope)
+    if(left.type !== types.object)
+      throw new Error('access on non-object')
+    if(!left.value[node.mid.value.description])
+      throw new Error('object did not have property:'+node.mid.value.description)
+    console.log('access', node, left, left.value[node.mid.value.description])
+    if(!node.right)
+      return left.value[node.mid.value.description]
+    else
+      return left.value[node.mid.value.description] = ev(node.right, scope)    
+    
   }
 
   if(node.type === types.fun)
