@@ -18,7 +18,8 @@ var inputs = [
   '{;fac:{n; eq(n 1) ? 1 ; mul(n fac(add(-1 n)))}}()(1)',
   '{;fac:{n; eq(n 1) ? 1 ; mul(n fac(add(-1 n)))}}()(7)',
   '{; sq:{x m; gt(x m) ? x ; sq(mul(x x) m) } }()(2 10000)',
-  '{x y; {x:x y:y}}(3 4)'
+  '{x y; {x:x y:y}}(3 4)',
+  '7 {; 1 2 3}()'
 ]
 
 var outputs = [
@@ -32,15 +33,17 @@ var outputs = [
   1,
   1*2*3*4*5*6*7,
   65536,
-  {x: 3, y: 4}
+  {x: 3, y: 4},
+  3
 ]
 
 function T (s) { return {type: types.type, value: s}}
-var n = T(types.number), b = T(types.boolean), o = T(types.object)
+var n = T(types.number), b = T(types.boolean)
 var output_types = [
   n,n,n,
   b,b,b,b,
-  n,n,n,o
+  n,n,n,T({x:n,y:n}),
+  n
 ]
 
 var scope = {
@@ -48,7 +51,7 @@ var scope = {
   and: function (a, b) { return a & b },
   mul: function (a, b) { return a * b },
   eq: function (a, b) { return a === b },
-  gt: function (a, b) { return a > b }  
+  gt: function (a, b) { return a > b }
 }
 
 var nnn = {type: types.typesig, args: [n, n], returns: n}
@@ -84,5 +87,6 @@ for(var i = 0; i < inputs.length; i++) {
     var type = check(ast, type_scope)
     console.log('TYP', type)
     assert.deepEqual(type, output_types[i])
+//    console.log(inspect(ast, {colors: true, depth: 100}))
   }
 }

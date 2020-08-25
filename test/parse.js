@@ -33,7 +33,8 @@ var inputs = [
   'sum:{n; eq(n 0) ? 0 ; add(1 sum(sub(n 1)))}',
   'x:y:z:0',
   '{;1}()',
-  '{k v; {key: k value: v}}'
+  '{k v; {key: k value: v}}',
+  'z:1 {;1 x:3}'
 ]
 
 for(var i = 0; i < inputs.length; i++)
