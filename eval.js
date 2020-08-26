@@ -30,9 +30,9 @@ function calls (node, name) {
 }
 
 var True = {types: types.boolean, value: true}
-function call (fn, args, scope) {
+function call (fn, args) {
   //eval with built in function
-  if(!scope) throw new Error('call without scope')
+  //if(!scope) throw new Error('call without scope')
   if(!fn) throw new Error('cannot call undefined')
   if('function' === typeof fn) {
     if(args.length !== fn.length) {
@@ -44,7 +44,7 @@ function call (fn, args, scope) {
   
   if(args.length !== fn.args.length)
     throw new Error('incorrect number of arguments for:'+inspect(fn, {colors:true})+', got:'+args)
-  var _scope = {__proto__: scope}
+  var _scope = {__proto__: fn.scope}
   if(fn.name)
     _scope[fn.name.description] = fn 
   for(var i = 0; i < fn.args.length; i++)
@@ -87,6 +87,7 @@ function ev (node, scope) {
   
   if(node.type === types.symbol) {
     var name = node.value
+//    console.log('scope', scope, scope.__proto__, scope.__proto__.proto__)
     if(!scope[name.description]) throw new Error('variable:'+name.description+' is not defined')
     return scope[name.description]
   }

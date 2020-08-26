@@ -41,8 +41,9 @@ function bind (fn, scope, name) {
   }
 }
 
-function call (fn, args, scope) {
-  if(!scope) throw new Error('call without scope')
+function call (fn, args) {
+  var scope = fn.scope
+//  if(!scope) throw new Error('call without scope')
   if(!fn) throw new Error('cannot call undefined')
 
   //check if we have already figured out the types for this function.
