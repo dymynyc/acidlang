@@ -65,6 +65,8 @@ function call (fn, args, scope) {
     var sig = fn.sig
     //{type: types.typesig, args: fn.args.map(Unknown), returns: Unknown()}
     sig.args = fn.args.map(Unknown)
+    if(sig.args.length != args.length)
+      throw new Error('incorrect number of arguments')
     sig.returns = Unknown()
     for(var i = 0; i < fn.args.length; i++) {
       var name = fn.args[i]
@@ -104,7 +106,10 @@ function check (node, scope) {
 
   if(node.type === types.access) {
     var left = check(node.left, scope)
-    return node.right ? check(node.right, scope) : left.value[node.mid.value.description]
+    var name = node.mid.value
+    if(!left.value[name.description])
+      throw new Error('did not have property:'+name.description)
+    return node.right ? check(node.right, scope) : left.value[name.description]
   }
   
   if(node.type === types.if) {
@@ -112,8 +117,8 @@ function check (node, scope) {
     var m = check(node.mid, scope)
     var r = check(node.right, scope)
     //todo: implement a way to express union types.
-    if(m.type != r.type)
-      throw new Error('if clauses must have same type')
+    if(!assertType(m, r))
+      throw new Error('if branches must have same type, was:'+inspect(m)+', '+inspect(r))
     return m
   }
 
@@ -152,6 +157,7 @@ function check (node, scope) {
       throw new Error('attempted to assign undefined value')
     var type = scope[name.description]
     var _type = check(node.right, scope)
+    console.log("SET", type, _type, type.value !== _type.value)
     if(type.value !== _type.value)
       throw new Error('variable already declared as type:'+type.value.description+ ', cannot reassign to type:'+_type.value.description)      
     return type

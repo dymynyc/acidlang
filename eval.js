@@ -128,7 +128,12 @@ function ev (node, scope) {
     //handle function defs specially, to enable recursion
     if(!scope[name.description])
       throw new Error('attempted to assign undefined value')
-    return scope[name.description] = ev(node.right, scope)
+    var value = ev(node.right, scope)
+    if(scope[name.description].type !== value.type)
+        throw new Error('attempted to assign value of type:'+value.type.description+
+          ', to variable:'+name.description+' of type:'+
+          scope[name.description].type.description)
+    return scope[name.description] = value
   }
 
   if(node.type === types.access) {
@@ -137,7 +142,6 @@ function ev (node, scope) {
       throw new Error('access on non-object')
     if(!left.value[node.mid.value.description])
       throw new Error('object did not have property:'+node.mid.value.description)
-    console.log('access', node, left, left.value[node.mid.value.description])
     if(!node.right)
       return left.value[node.mid.value.description]
     else
