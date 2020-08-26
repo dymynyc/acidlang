@@ -30,16 +30,19 @@ var inputs = [
   '{; }',
   '{ ;}',
   '{;{;}}',
+  '{;{;}}',
   'sum:{n; eq(n 0) ? 0 ; add(1 sum(sub(n 1)))}',
   'x:y:z:0',
   '{;1}()',
   '{k v; {key: k value: v}}',
-  'z:1 {;1 x:3}'
+  'z:1 {;1 x:3}',
+  'x@i32'
 ]
 
-for(var i = 0; i < inputs.length; i++)
+for(var i = 0; i < inputs.length; i++) {
+  console.log("parse:", inputs[i])
   console.log(inspect(parse(inputs[i]), {depth: Infinity, colors: true}))
-
+}
 //a ? b : c
 
 //a ? b_a ? b_b : b_c : c
