@@ -1,4 +1,5 @@
 var types = require('./types')
+var inspect = require('util').inspect
 
 function isPrimitive (node) {
   return (
@@ -23,7 +24,7 @@ function unmap(v) {
       ary[i] = unmap(v.value[i])
     return Object.seal(ary)
   }
-  else if(isPrimitive(v))
+  else if(isPrimitive(v) || types.type === v.type)
     return v.value
   else
     throw new Error('cannot unmap node:'+inspect(v))
