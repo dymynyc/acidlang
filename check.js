@@ -2,9 +2,6 @@ var types = require('./types')
 var inspect = require('util').inspect
 var {isPrimitive} = require('./util')
 
-//note: globals object types.
-var object_types = {}
-
 var Boolean = {type: types.type, value: types.boolean}
 
 function assertType(actual, expected) {
@@ -157,14 +154,17 @@ function check (node, scope) {
       throw new Error('attempted to assign undefined value')
     var type = scope[name.description]
     var _type = check(node.right, scope)
-    console.log("SET", type, _type, type.value !== _type.value)
     if(type.value !== _type.value)
       throw new Error('variable already declared as type:'+type.value.description+ ', cannot reassign to type:'+_type.value.description)      
     return type
   }
 
-  if(node.type === types.fun) {
+  if(node.type === types.fun)
     return bind(node, scope)
+
+  if(node.type === types.is) {
+    assertType(check(node.left, scope), check(node.right, scope))
+    return Boolean
   }
 
   throw new Error('cannot check:'+inspect(node))

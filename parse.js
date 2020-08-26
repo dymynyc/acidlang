@@ -37,7 +37,7 @@ function Map (rule, mapper, type) {
   return function (input, start, end, group) {
     //var captured
 //    try {
-    console.log("map", type, input.substring(0, start)+'>'+input.substring(start, end))
+//    console.log("map", type, input.substring(0, start)+'>'+input.substring(start, end))
     return rule(input, start, end, (v) => {group(mapper(v))})
     // } catch(err) {
       
@@ -125,6 +125,7 @@ module.exports = function (symbols) {
         Infix('|', types.or,  expected_value),
         Infix('=', types.set, expected_value),
         Infix(':', types.def, expected_value),
+        Infix('@', types.is,  expected_value),
         Group(And('?', _, expected_value, _, Expect(';'), _, expected_value), (args) => ({type:types.if, left: null, mid: args[0], right:args[1]})),
         Map(invocation, (args) => ({type: types.call, value: null, args})), 
         Map(access, (args) => ({type: types.access, left: null, mid: args[0], right: args[1] || null}))

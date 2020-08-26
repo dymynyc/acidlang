@@ -66,6 +66,8 @@ function compile(node) {
   if(type === types.access) {
     return compile(node.left)+'.'+compile(node.mid)+(node.right?'='+compile(node.right):'')
   }
+  if(type === types.is) //assume this has been handled by the type checker
+    return 'true'
   throw new Error('cannot compile:'+inspect(node))
 }
 

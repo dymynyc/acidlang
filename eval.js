@@ -29,6 +29,7 @@ function calls (node, name) {
   return node.type === types.call && node.value.type === types.symbol && node.value.value === name
 }
 
+var True = {types: types.boolean, value: true}
 function call (fn, args, scope) {
   //eval with built in function
   if(!scope) throw new Error('call without scope')
@@ -151,6 +152,16 @@ function ev (node, scope) {
 
   if(node.type === types.fun)
     return bind(node, scope)
+  
+  if(node.type === types.is) {
+    var left = ev(node.left, scope)
+    var right = ev(node.right, scope)
+    if(left.type !== right.value)
+      throw new Error('type assertion failed')
+    return True
+  }
+  
+  throw new Error('cannot eval:'+inspect(node))
 }
 
 module.exports = ev
