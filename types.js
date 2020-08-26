@@ -17,5 +17,6 @@ module.exports = {
   def:    $('def'),
   typesig:$('typesig'),
   type:   $('type'),
-  access: $('access')
+  access: $('access'),
+  is:     $('is')
 }
