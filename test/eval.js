@@ -129,7 +129,6 @@ for(var i = 0; i < inputs.length; i++) {
 
 //    if(output_types[i]) {
       var type = check(ast, {__proto__:type_scope})
-      console.log('TYP', type)
       if(type.type === types.object) {
         assert.deepEqual(Object.keys(type.value), Object.keys(outputs[i].value))
         for(var k in type.value)

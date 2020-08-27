@@ -31,7 +31,12 @@ var inputs = [
   'foo: 1 foo = true',
  
   //cannot assign undefined variable
-  'foo=true'
+  'foo=true',
+  //cannot use self reference as an argument
+  'f:{x;} X:{y:f(X)}',
+  'X:{y: X ? 1 ; 2}',
+  //note: this is allowed. the body of the function isn't type checked until it's called.
+  //'X:{y:{;X}}'
 ]
 
 var scope = {}

@@ -36,7 +36,9 @@ var inputs = [
   '{;1}()',
   '{k v; {key: k value: v}}',
   'z:1 {;1 x:3}',
-  'x@i32'
+  'x@i32',
+  '{foo: 1 & 2}',
+  '{foo: true ? 1 ; 2}',
 ]
 
 for(var i = 0; i < inputs.length; i++) {
