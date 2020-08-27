@@ -121,8 +121,16 @@ function ev (node, scope) {
     var name = node.left.value
     if(Object.hasOwnProperty.call(scope, name.description))
       throw new Error('variable already defined:'+name.descripton+', cannot redefine')
-    return scope[name.description] = 
-      node.right.type === types.fun ? bind(node.right, scope, name) : ev(node.right, scope)
+    if(node.right.type === types.fun)
+      return scope[name.description] = bind(node.right, scope, name)
+    else if(node.right.type === types.object) {
+      var _obj = scope[name.description] = {type: types.object, value: null, cyclic: true}
+      var obj = scope[name.description] = ev(node.right, scope)
+      _obj.value = obj.value
+      return obj
+    }
+    else
+       return scope[name.description] = ev(node.right, scope)
   }
 
   if(node.type === types.set) {
@@ -157,8 +165,14 @@ function ev (node, scope) {
   if(node.type === types.is) {
     var left = ev(node.left, scope)
     var right = ev(node.right, scope)
-    if(left.type !== right.value)
+    ;(function is (left, right) {
+      if(right.type === types.object) {
+        for(var k in right.value)
+          is(left.value[k], right.value[k])
+      }
+      else if(left.type !== right.value)
       throw new Error('type assertion failed')
+    })(left, right)
     return True
   }
   

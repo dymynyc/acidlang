@@ -1,5 +1,6 @@
 var types = require('./types')
 var inspect = require('util').inspect
+var {isCyclic} = require('./util')
 
 function args (args) {
   return args.map(v=> 'symbol' === typeof v ? v.description : compile(v)).join(', ')
@@ -25,7 +26,8 @@ function compile(node) {
     var exprs = node.map(compile)
     if(vars) {
       var last = exprs.pop()
-      return '(function () {\n  '+vars+'\n  '+exprs.join(';\n  ')+';\n  return '+last+'\n})()'
+      exprs = exprs.map(v => v + ';\n  ')
+      return '(function () {\n  '+vars+'\n  '+exprs.join('')+'return '+last+'\n})()'
     }
     else return exprs.length > 1? '(' + exprs.join(', ')+')' : exprs[0]
   }
@@ -59,8 +61,19 @@ function compile(node) {
     return 'Object.seal({'+Object.keys(node.value).map(k => k + ':' + compile(node.value[k])).join(', ')+'})'
   if(type === types.array)
     return '(['+node.value.map(v => compile(v)).join(', ')+'])'
-  if(type === types.set || node.type === types.def)
+  if(type === types.set || node.type === types.def) {
+    if(node.right.type === types.object /*&& isCyclic(node.right.value)*/) {
+      var name = node.left.value.description
+      var obj = node.right
+      return '('+ name + '={},' +
+        Object.keys(obj.value).map(function (k) {
+          return name +'.'+k+'='+compile(obj.value[k])
+        }).join(', ')
+        +',Object.seal(' + name + '))'
+      
+    }
     return '('+node.left.value.description + '='+compile(node.right)+')'
+  }
   if(type === types.call)
     return compile(node.value) + '(' + args(node.args) + ')'
   if(type === types.access) {

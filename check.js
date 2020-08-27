@@ -2,27 +2,29 @@ var types = require('./types')
 var inspect = require('util').inspect
 var {isPrimitive} = require('./util')
 
-var Boolean = {type: types.type, value: types.boolean}
+var Boolean = {type: types.boolean, value: null}
+var True = {type: types.boolean, value: true}
 
 function assertType(actual, expected) {
-  if(actual.type !== types.type)
-    throw new Error('expected `actual` to be type object, was:' + inspect(actual))
-  if(expected.type !== types.type)
-    throw new Error('expected `expected` to be a type object, was:' + inspect(expected))
+  // if(actual.type !== types.type)
+  // throw new Error('expected `actual` to be type object, was:' + inspect(actual))
+  // if(expected.type !== types.type)
+  //  throw new Error('expected `expected` to be a type object, was:' + inspect(expected))
   //in some cases, a variable is created before we know the type,
   //so assign it here. I wonder if this will work?
-  if(expected.value === null)
-    expected.value = actual.value
-  else if(actual.value === null)
-    actual.value = expected.value
-  else if(actual.value !== expected.value) {
-    throw new Error('expected:'+expected.value.description+', got:'+actual.value.description)
+  if(expected.type === null)
+    expected.type = actual.type
+  else if(actual.type === null)
+    actual.type = expected.type
+  else if(actual.type !== expected.type) {
+    console.log('types', actual, expected)
+    throw new Error('expected:'+expected.type.description+', got:'+actual.type.description)
   }
   return actual
 }
 
 function Unknown () {
-  return {type: types.type, value: null}
+  return {type: null, value: null}
 }
 
 function TypeSig () {
@@ -82,7 +84,7 @@ function call (fn, args) {
 
 function check (node, scope) {
   if(isPrimitive(node))
-    return {type: types.type, value: node.type}
+    return node //{type: types.type, value: node.type}
 
   if(Array.isArray(node)) {
     var value
@@ -132,7 +134,7 @@ function check (node, scope) {
     var obj = {}
     for(var k in node.value)
       obj[k] = check(node.value[k], scope)
-    return {type: types.type, value: obj}
+    return {type: types.object, value: obj}
   }
   if(node.type === types.array) {
     //an array of whatever
@@ -140,10 +142,17 @@ function check (node, scope) {
   }
   if(node.type === types.def) {
     var name = node.left.value
-    if(Object.hasOwnProperty.call(scope, name.description))
-      throw new Error('variable already defined:'+name.descripton+', cannot redefine')
+    if(Object.hasOwnProperty.call(scope, name.description)) {
+      throw new Error('variable already defined:'+name.description+', cannot redefine')
+    }
     if(node.right.type === types.fun)
       return scope[name.description] = bind(node.right, scope, name)
+    else if(node.right.type === types.object) {
+      var _obj = scope[name.description] = {type: types.object, value: null, cyclic: true}
+      var obj = check(node.right, scope)
+      _obj.value = obj.value
+      return obj
+    }
     else
       return scope[name.description] = check(node.right, scope)
   }
@@ -164,8 +173,11 @@ function check (node, scope) {
     return bind(node, scope)
 
   if(node.type === types.is) {
-    assertType(check(node.left, scope), check(node.right, scope))
-    return Boolean
+    var left = check(node.left, scope)
+    var right = check(node.right, scope)
+    console.log("IS", left, right)
+    assertType(left, right.type === types.object ? right : {type: right.value, value: null})
+    return True
   }
 
   throw new Error('cannot check:'+inspect(node))
