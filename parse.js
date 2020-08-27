@@ -35,16 +35,7 @@ function Extend (prefix, extender, reduce) {
 function Map (rule, mapper, type) {
   var e = new Error()
   return function (input, start, end, group) {
-    //var captured
-//    try {
-//    console.log("map", type, input.substring(0, start)+'>'+input.substring(start, end))
     return rule(input, start, end, (v) => {group(mapper(v))})
-    // } catch(err) {
-      
-      // console.log('created at:')
-      // console.log(err)
-      // throw err
-    // }
   }
 }
 
@@ -85,10 +76,11 @@ module.exports = function (symbols) {
     )
     
     var static_access = And('.', _, Group(And(variable, Maybe(And(_, '=', _, value)))))
-    var dynamic_access = And('.', _, Group(And(And('[', value, ']'), Maybe(And(_, '=', _, value)))))
+    var dynamic_access = And('.', _, Group(And(And('[', _, value, _, ']'), Maybe(And(_, '=', _, value)))))
     
     //object literals
-    var object = OpenClose('{', Group(And(variable, _, ':', _, Expect(value))), Expect('}'), function (pairs) {
+    var kv = Group(And(variable, _, ':', _, Expect(value)))
+    var object = OpenClose('{', kv, '}', function (pairs) {
       var obj = {}
       pairs.forEach(function (kv) {
         obj[kv[0].value.description] = kv[1]
@@ -117,7 +109,7 @@ module.exports = function (symbols) {
       return {type: types.fun, args: fun[0], body: fun[1] ? fun[1] : Nil, scope: null, name: null}
     })
 
-    var _value = Or(string, number, nil, boolean, fun, object, array, variable, symbol, value)
+    var _value = Or(string, number, nil, boolean, fun, object, array, variable, symbol)
 
     // used places where a value definitely must happen
     var expected_value = Expect(value, 'expected acidlisp value')
