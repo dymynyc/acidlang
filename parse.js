@@ -13,8 +13,12 @@ var _  = /^\s*/ //optional whitespace
 //note: json's string and number already captures.
 var json = require('stack-expression/examples/json')
 
+function List(val, map) {
+  return Group(Maybe(Join(val, __)), map)
+}
+
 function OpenClose (op, item, cl, map) {
-  return And(op, _, Group(Maybe(Join(item, __)), map), _, Expect(cl))
+  return And(op, _, List(item, map), _, Expect(cl))
 }
 
 function Extend (prefix, extender, reduce) {
@@ -67,63 +71,50 @@ module.exports = function (symbols) {
   var variable = Text(/^[a-zA-Z_][a-zA-Z0-9_]*/, (text) => ({type: types.variable, value: $(text) }))
   var symbol = And('$', Text(/^[a-zA-Z_][a-zA-Z0-9_]*/, (text) => ({type: types.symbol, value: $(text) })))
 
+  //function args can only be a symbols, so don't need to be wrapped.
+  var args = List(variable) //Group(Maybe(Join(variable, __)))
+
   var value = Recurse (function (value) {
-    //function calls (sneak "assignment" in as special case)
-    var invocation = Or(
-      //foo.bar=baz is just the same as foo(/bar baz) but only if bar is a literal symbol.
-      And('(', _,')', Group(Empty)), //handle empty args specially
-      OpenClose('(', value, ')'),
-    )
+    var invocation = OpenClose('(', value, ')')
     
-    var static_access = And('.', _, Group(And(variable, Maybe(And(_, '=', _, value)))))
-    var dynamic_access = And('.', _, Group(And(And('[', _, value, _, ']'), Maybe(And(_, '=', _, value)))))
-    
+    var assignment = Maybe(And(_, '=', _, value))
+    var access = And('.', _, Or(
+      Group(And(variable, assignment), (args) => ({type: types.access, left: null, mid: args[0], right: args[1] || null, static: true})),
+      Group(And('[', _, value, _, ']', assignment), (args) => ({type: types.access, left: null, mid: args[0], right: args[1] || null, static: false}))
+    ))
     //object literals
     var kv = Group(And(variable, _, ':', _, Expect(value)))
     var object = OpenClose('{', kv, '}', function (pairs) {
       var obj = {}
-      pairs.forEach(function (kv) {
-        obj[kv[0].value.description] = kv[1]
-      })
+      pairs.forEach((kv) => obj[kv[0].value.description] = kv[1])
       return {type: types.object, value: Object.seal(obj)} //prevent adding new fields (but allow mutation of current fields)
     })
 
     //arrays with square brackets. unlike javascript, don't make this also be property access. avoid ambiguity!
    
-    var array = OpenClose('[', value, Expect(']'), (ary) => ({type: types.array, value: ary}))
-    
-    //function args can only be a symbols, so don't need to be wrapped.
-    var args = Group(Maybe(Join(variable, __)))
+    var array = OpenClose('[', value, ']', (ary) => ({type: types.array, value: ary}))
     
     //function definitions
     //something weird was going on trying to define functions with empty body?
     var fun = Group(
-      And(
-        '{', _, args, _, ';', _,
-        Or(
-          '}',
-          And(Group(Join(value, __)), _, Expect('}'))
-        )
-      ),
-      function (fun) {
-      return {type: types.fun, args: fun[0], body: fun[1] ? fun[1] : Nil, scope: null, name: null}
-    })
-
-    var _value = Or(string, number, nil, boolean, fun, object, array, variable, symbol)
+      And('{', _, args, _, ';', _, List(value), _, Expect('}')),
+      (fun) => ({type: types.fun, args: fun[0], body: fun[1] ? fun[1] : Nil, scope: null, name: null})
+    )
 
     // used places where a value definitely must happen
     var expected_value = Expect(value, 'expected acidlisp value')
 
-    return Extend(_value, And(_, Or(
+    var unit = Or(string, number, nil, boolean, variable, symbol, fun, object, array)
+
+    return Extend(unit, And(_, Or(
         Infix('&', types.and, expected_value),
         Infix('|', types.or,  expected_value),
         Infix('=', types.set, expected_value),
         Infix(':', types.def, expected_value),
         Infix('@', types.is,  expected_value),
         Group(And('?', _, expected_value, _, Expect(';'), _, expected_value), (args) => ({type:types.if, left: null, mid: args[0], right:args[1]})),
-        Map(invocation, (args) => ({type: types.call, value: null, args})), 
-        Map(static_access, (args) => ({type: types.access, left: null, mid: args[0], right: args[1] || null, static: true})),
-        Map(dynamic_access, (args) => ({type: types.access, left: null, mid: args[0], right: args[1] || null, static: false}))
+        Map(invocation, (args) => ({type: types.call, value: null, args})),
+        access
       )), (left, right) => {
         if(right.type === types.call) right.value = left
         else                          right.left = left
@@ -131,7 +122,7 @@ module.exports = function (symbols) {
     })
   })
 
-  var _parse = And(_, Join(value, __), _, EOF)
+  var _parse = And(_, List(value), _, EOF)
 
   return function (src) {
     var g = []
