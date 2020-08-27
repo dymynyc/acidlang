@@ -93,9 +93,9 @@ function check (node, scope, allow_cyclic) {
     return value
   }
 
-  if(node.type === types.symbol) {
+  if(node.type === types.variable) {
     if(!scope[node.value.description])
-      throw new Error('symbol:'+node.value.description+' is not defined')
+      throw new Error('variable:'+node.value.description+' is not defined')
     var value = scope[node.value.description]
     if(value.type === types.object && value.cyclic && !allow_cyclic) {
       console.log('cyclic', value, allow_cyclic)
@@ -181,7 +181,6 @@ function check (node, scope, allow_cyclic) {
   if(node.type === types.is) {
     var left = check(node.left, scope)
     var right = check(node.right, scope)
-    console.log("IS", left, right)
     assertType(left, right.type === types.object ? right : {type: right.value, value: null})
     return True
   }

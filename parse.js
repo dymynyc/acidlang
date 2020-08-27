@@ -73,7 +73,8 @@ module.exports = function (symbols) {
   var number  = Wrap('number')
   var string  = Wrap('string')
 
-  var sym = Text(/^[a-zA-Z_][a-zA-Z0-9_]*/, (text) => ({type: types.symbol, value: $(text) }))
+  var variable = Text(/^[a-zA-Z_][a-zA-Z0-9_]*/, (text) => ({type: types.variable, value: $(text) }))
+  var symbol = And('$', Text(/^[a-zA-Z_][a-zA-Z0-9_]*/, (text) => ({type: types.symbol, value: $(text) })))
 
   var value = Recurse (function (value) {
     //function calls (sneak "assignment" in as special case)
@@ -83,10 +84,11 @@ module.exports = function (symbols) {
       OpenClose('(', value, ')'),
     )
     
-    var access = And('.', _, Group(And(sym, Maybe(And(_, '=', _, value)))))
+    var static_access = And('.', _, Group(And(variable, Maybe(And(_, '=', _, value)))))
+    var dynamic_access = And('.', _, Group(And(And('[', value, ']'), Maybe(And(_, '=', _, value)))))
     
     //object literals
-    var object = OpenClose('{', Group(And(sym, _, ':', _, Expect(value))), Expect('}'), function (pairs) {
+    var object = OpenClose('{', Group(And(variable, _, ':', _, Expect(value))), Expect('}'), function (pairs) {
       var obj = {}
       pairs.forEach(function (kv) {
         obj[kv[0].value.description] = kv[1]
@@ -99,7 +101,7 @@ module.exports = function (symbols) {
     var array = OpenClose('[', value, Expect(']'), (ary) => ({type: types.array, value: ary}))
     
     //function args can only be a symbols, so don't need to be wrapped.
-    var args = Group(Maybe(Join(sym, __)), (args) => { return args.map(v => v.value)})
+    var args = Group(Maybe(Join(variable, __)))
     
     //function definitions
     //something weird was going on trying to define functions with empty body?
@@ -115,7 +117,7 @@ module.exports = function (symbols) {
       return {type: types.fun, args: fun[0], body: fun[1] ? fun[1] : Nil, scope: null, name: null}
     })
 
-    var _value = Or(string, number, nil, boolean, fun, object, array, sym, value)
+    var _value = Or(string, number, nil, boolean, fun, object, array, variable, symbol, value)
 
     // used places where a value definitely must happen
     var expected_value = Expect(value, 'expected acidlisp value')
@@ -128,7 +130,8 @@ module.exports = function (symbols) {
         Infix('@', types.is,  expected_value),
         Group(And('?', _, expected_value, _, Expect(';'), _, expected_value), (args) => ({type:types.if, left: null, mid: args[0], right:args[1]})),
         Map(invocation, (args) => ({type: types.call, value: null, args})), 
-        Map(access, (args) => ({type: types.access, left: null, mid: args[0], right: args[1] || null}))
+        Map(static_access, (args) => ({type: types.access, left: null, mid: args[0], right: args[1] || null, static: true})),
+        Map(dynamic_access, (args) => ({type: types.access, left: null, mid: args[0], right: args[1] || null, static: false}))
       )), (left, right) => {
         if(right.type === types.call) right.value = left
         else                          right.left = left

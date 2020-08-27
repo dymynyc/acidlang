@@ -1,4 +1,4 @@
-function $(str) { return Symbol(str) }
+var $ = require('./symbols')
 
 module.exports = { //T
   call:   $('call'),    //{value:fn|symbol|call args: [*]}
@@ -6,6 +6,7 @@ module.exports = { //T
   
   array:  $('array'),   //{value: [* Object|Array|Primitive]
   fun:    $('fun'),     //{args: [*], body: [E], scope: HT:value, name:sym}
+  variable: $('variable'),  //{value:sym}
   symbol: $('symbol'),  //{value:sym}
   number: $('number'),  //{value:number}
   boolean: $('boolean'),//{value:boolean}

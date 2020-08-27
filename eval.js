@@ -20,7 +20,7 @@ function ev_loop(fn, scope) {
   while(ev_ab(test, scope).value ^ not) {
     var values = update.map(e => ev(e, scope))
     for(var i = 0; i < fn.args.length; i++)
-      scope[fn.args[i].description] = values[i]
+      scope[fn.args[i].value.description] = values[i]
   }
   return ev(terminal, scope)
 }
@@ -39,7 +39,13 @@ function call (fn, args) {
       throw new Error('incorrect number of arguments for:'+fn+', got:'+args)
     }
     var _value = fn.apply(null, args.map(v => v.value))
-    return 'boolean' === typeof _value ? {type:types.boolean, value: _value} : {type:types.number, value: _value}
+    return (
+      'boolean' === typeof _value ? {type:types.boolean, value: _value} :
+      'number'  === typeof _value ? {type:types.number,  value: _value} :
+      'string'  === typeof _value ? {type:types.string,  value: _value} :
+      null === _value             ? {type: types.nil,    value: _value} :
+      (function () { throw new Error('built ins must only return primitives') })()
+    )
   }
   
   if(args.length !== fn.args.length)
@@ -48,7 +54,7 @@ function call (fn, args) {
   if(fn.name)
     _scope[fn.name.description] = fn 
   for(var i = 0; i < fn.args.length; i++)
-    _scope[fn.args[i].description] = args[i]
+    _scope[fn.args[i].value.description] = args[i]
 
 
   //optimization for special case of recursion
@@ -85,7 +91,7 @@ function ev (node, scope, allow_cyclic) {
     return value
   }
   
-  if(node.type === types.symbol) {
+  if(node.type === types.variable) {
     var name = node.value
 //    console.log('scope', scope, scope.__proto__, scope.__proto__.proto__)
     if(!scope[name.description]) throw new Error('variable:'+name.description+' is not defined')
@@ -94,6 +100,9 @@ function ev (node, scope, allow_cyclic) {
       throw new Error('cyclic reference must not be used outside of object literal')
     return value
   }
+
+  if(node.type === types.symbol)
+    return node
 
   if(node.type === types.call) {
     //usually, this will be a lookup, but it be a function expression!
@@ -153,13 +162,24 @@ function ev (node, scope, allow_cyclic) {
     var left = ev(node.left, scope)
     if(left.type !== types.object)
       throw new Error('access on non-object')
-    if(!left.value[node.mid.value.description])
-      throw new Error('object did not have property:'+node.mid.value.description)
-    if(!node.right)
-      return left.value[node.mid.value.description]
+    var key = node.mid.type === types.variable ? node.mid.value.description : ev(node.mid, scope)
+    if(left.type === types.object) {
+      if(!left.value[node.mid.value.description])
+        throw new Error('object did not have property:'+node.mid.value.description)
+    }
+    else if(left.type === types.array) {
+      if(key.type === types.number && (key.value > left.value.length || key.value < 0)) {
+        return {type: types.nil, value: null}
+        //throw new Error('array index out of bounds')
+      }
+      else
+        if(key.type === types.variable && key.value !== types.length)
+          throw new Error('cannot access property:'+key.value.description+' on array, only length')
+    }
     else
-      return left.value[node.mid.value.description] = ev(node.right, scope)    
-    
+      throw new Error('cannot access property:'+inspect(key) + ' of '+inspect(left))
+    if(!node.right) return left.value[key]
+    else            return left.value[key] = ev(node.right, scope)    
   }
 
   if(node.type === types.fun)

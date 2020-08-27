@@ -1,6 +1,5 @@
 var types = require('./types')
 var inspect = require('util').inspect
-var {isCyclic} = require('./util')
 
 function args (args) {
   return args.map(v=> 'symbol' === typeof v ? v.description : compile(v)).join(', ')
@@ -38,8 +37,10 @@ function compile(node) {
     return node.value.toString()
   if(type === types.string)
     return JSON.stringify(node.value.toString())
-  if(type === types.symbol)
+  if(type === types.variable)
     return node.value.description
+  if(type === types.symbol)
+    return '$("'+node.value.description+'")'
   if(type === types.nil)
     return 'null'
   if(type === types.if)
@@ -48,6 +49,7 @@ function compile(node) {
     return '(' + compile(node.left) + ' ? ' + compile(node.right) + ' : false)'
   if(type === types.or)
     return '(' + compile(node.left) + ' ? true : ' + compile(node.right) + ')' 
+  //XXX
   if(type === types.fun) {
     var vars = get_vars(node.body)
     if(node.name)
@@ -57,10 +59,13 @@ function compile(node) {
         (vars ? '{'+vars+'return '+compile(node.body)+'}' :  compile(node.body))
       + ')'
   }
+  //XXX
   if(type === types.object)
     return 'Object.seal({'+Object.keys(node.value).map(k => k + ':' + compile(node.value[k])).join(', ')+'})'
+  //XXX
   if(type === types.array)
     return '(['+node.value.map(v => compile(v)).join(', ')+'])'
+  //XXX
   if(type === types.set || node.type === types.def) {
     if(node.right.type === types.object /*&& isCyclic(node.right.value)*/) {
       var name = node.left.value.description
@@ -74,10 +79,13 @@ function compile(node) {
     }
     return '('+node.left.value.description + '='+compile(node.right)+')'
   }
+  //XXX
   if(type === types.call)
     return compile(node.value) + '(' + args(node.args) + ')'
   if(type === types.access) {
-    return compile(node.left)+'.'+compile(node.mid)+(node.right?'='+compile(node.right):'')
+    return compile(node.left)+(
+        node.static ? '.'+compile(node.mid) : '[' + compile(node.mid) + ']'
+      )+(node.right?'='+compile(node.right):'')
   }
   if(type === types.is) //assume this has been handled by the type checker
     return 'true'
