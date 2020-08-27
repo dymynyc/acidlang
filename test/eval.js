@@ -6,6 +6,7 @@ var compile = require('../compile-js')
 var types   = require('../types')
 var check   = require('../check')
 var {unmap} = require('../util')
+var $ = require('../symbols')
 
 var inputs = [
   'add(1 2)',
@@ -28,7 +29,8 @@ var inputs = [
   'x:1 x@i32',
   'Obj:{x:i32 y:i32 z:i32} obj:{x:1 y:1 z:1} obj@Obj',
   'a:{self:a}', //cyclic!
-  'deep:{a:{b:{c:deep}}}'
+  'deep:{a:{b:{c:deep}}}',
+  '$object'
 ]
 
 function T (s, v) { return {type: s, value: v === undefined ? null : v}}
@@ -66,7 +68,8 @@ var outputs = [
   ///T(types.type, types.number)
   B(true),
   cyclic,
-  cyclic2
+  cyclic2,
+  T(types.symbol, types.object)
 ]
 var cyclic_raw = {self:null}
 cyclic_raw.self = cyclic_raw
@@ -74,7 +77,7 @@ var cyclic2_raw = {a:{b:{c:null}}}
 cyclic2_raw.a.b.c = cyclic2_raw
 var outputs_raw = [
   3,7,10,false,true,true,false,1,1*2*3*4*5*6*7,65536,
-  {x:3,y:4},3,30,7,123,987,349783,true,true, cyclic_raw, cyclic2_raw
+  {x:3,y:4},3,30,7,123,987,349783,true,true, cyclic_raw, cyclic2_raw, types.object
 ]
 
 var output_types = [

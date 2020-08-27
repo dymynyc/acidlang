@@ -39,6 +39,9 @@ var inputs = [
   'x@i32',
   '{foo: 1 & 2}',
   '{foo: true ? 1 ; 2}',
+  'a ? b ? c ; d ; e',
+  'a.[1]',
+  'a.[0]=1',
 ]
 
 for(var i = 0; i < inputs.length; i++) {
