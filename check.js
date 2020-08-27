@@ -82,7 +82,7 @@ function call (fn, args) {
   throw new Error('unknown call type:'+inspect(fn))
 }
 
-function check (node, scope) {
+function check (node, scope, allow_cyclic) {
   if(isPrimitive(node))
     return node //{type: types.type, value: node.type}
 
@@ -96,7 +96,10 @@ function check (node, scope) {
   if(node.type === types.symbol) {
     if(!scope[node.value.description])
       throw new Error('symbol:'+node.value.description+' is not defined')
-    return scope[node.value.description]
+    var value = scope[node.value.description]
+    if(value.type === types.object && value.cyclic && !allow_cyclic)
+      throw new Error('cyclic reference:'+node.value.description+' must not be used outside of object literal')
+    return value
   }
 
   if(node.type === types.call) {
@@ -149,7 +152,7 @@ function check (node, scope) {
       return scope[name.description] = bind(node.right, scope, name)
     else if(node.right.type === types.object) {
       var _obj = scope[name.description] = {type: types.object, value: null, cyclic: true}
-      var obj = check(node.right, scope)
+      var obj = check(node.right, scope, true)
       _obj.value = obj.value
       return obj
     }

@@ -73,7 +73,7 @@ function ev_if(a,b,c, scope) {
   else return ev(c, scope)  
 }
 
-function ev (node, scope) {
+function ev (node, scope, allow_cyclic) {
   if(!node)  throw new Error('null node')
   if(!scope) throw new Error('missing scope')
 
@@ -89,7 +89,10 @@ function ev (node, scope) {
     var name = node.value
 //    console.log('scope', scope, scope.__proto__, scope.__proto__.proto__)
     if(!scope[name.description]) throw new Error('variable:'+name.description+' is not defined')
-    return scope[name.description]
+    var value = scope[name.description]
+    if(value.type === types.object && value.cyclic && !allow_cyclic)
+      throw new Error('cyclic reference must not be used outside of object literal')
+    return value
   }
 
   if(node.type === types.call) {
@@ -105,7 +108,7 @@ function ev (node, scope) {
   if(node.type === types.object) {
     var obj = {}
     for(var k in node.value)
-      obj[k] = ev(node.value[k], scope)
+      obj[k] = ev(node.value[k], scope, allow_cyclic)
     return {type: types.object, value: Object.seal(obj)}
   }
   
@@ -125,12 +128,12 @@ function ev (node, scope) {
       return scope[name.description] = bind(node.right, scope, name)
     else if(node.right.type === types.object) {
       var _obj = scope[name.description] = {type: types.object, value: null, cyclic: true}
-      var obj = scope[name.description] = ev(node.right, scope)
+      var obj = scope[name.description] = ev(node.right, scope, true)
       _obj.value = obj.value
       return obj
     }
     else
-       return scope[name.description] = ev(node.right, scope)
+     return scope[name.description] = ev(node.right, scope)
   }
 
   if(node.type === types.set) {
