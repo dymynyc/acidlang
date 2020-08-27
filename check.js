@@ -97,8 +97,10 @@ function check (node, scope, allow_cyclic) {
     if(!scope[node.value.description])
       throw new Error('symbol:'+node.value.description+' is not defined')
     var value = scope[node.value.description]
-    if(value.type === types.object && value.cyclic && !allow_cyclic)
+    if(value.type === types.object && value.cyclic && !allow_cyclic) {
+      console.log('cyclic', value, allow_cyclic)
       throw new Error('cyclic reference:'+node.value.description+' must not be used outside of object literal')
+    }
     return value
   }
 
@@ -136,7 +138,7 @@ function check (node, scope, allow_cyclic) {
     //throw new Error('type checks for objects not yet implemented')
     var obj = {}
     for(var k in node.value)
-      obj[k] = check(node.value[k], scope)
+      obj[k] = check(node.value[k], scope, allow_cyclic)
     return {type: types.object, value: obj}
   }
   if(node.type === types.array) {
@@ -154,6 +156,7 @@ function check (node, scope, allow_cyclic) {
       var _obj = scope[name.description] = {type: types.object, value: null, cyclic: true}
       var obj = check(node.right, scope, true)
       _obj.value = obj.value
+      scope[name.description] = obj
       return obj
     }
     else
