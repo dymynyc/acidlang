@@ -1,11 +1,6 @@
 var {And,Or,Maybe,Many,More,Join,Recurse,Group,Text,Expect,EOF,Empty}  = require('stack-expression')
+var $ = require('./symbols')
 var types = require('./types')
-
-// m-expressions were an alternate form of lisp that they never got around to
-// implementing, but is basically what js, c, and most other languages look like.
-// https://en.wikipedia.org/wiki/M-expression
-
-// except I'm sticking with space separation
 
 var __ = /^\s+/ //mandatory whitespace
 var _  = /^\s*/ //optional whitespace
@@ -49,13 +44,7 @@ function Infix (rule, type, subrule) {
   }, type))
 }
 
-module.exports = function (symbols) {
-  // filename = filename || ''
-  symbols = symbols || {__proto__: types}
-  function $ (str) {
-    return symbols[str] = symbols[str] || Symbol(str)
-  }
-
+module.exports = function () {
   //primitive values
   var Nil = {type: types.nil, value: null }
   var nil = Text(/^nil/, () => Nil)
@@ -75,22 +64,29 @@ module.exports = function (symbols) {
   var args = List(variable) //Group(Maybe(Join(variable, __)))
 
   var value = Recurse (function (value) {
-    var invocation = OpenClose('(', value, ')')
-    
+    // used places where a value definitely must happen
+    var expected_value = Expect(value, 'expected acidlisp value')
+
+    var invocation = OpenClose('(', value, ')', (args) => ({type: types.call, value: null, args}))
+
     var assignment = Maybe(And(_, '=', _, value))
+
     var access = And('.', _, Or(
       Group(And(variable, assignment), (args) => ({type: types.access, left: null, mid: args[0], right: args[1] || null, static: true})),
       Group(And('[', _, value, _, ']', assignment), (args) => ({type: types.access, left: null, mid: args[0], right: args[1] || null, static: false}))
     ))
+ 
     //object literals
-    var kv = Group(And(variable, _, ':', _, Expect(value)))
-    var object = OpenClose('{', kv, '}', function (pairs) {
+    var key_value = Group(And(variable, _, ':', _, Expect(value)))
+    var object = OpenClose('{', key_value, '}', function (pairs) {
       var obj = {}
       pairs.forEach((kv) => obj[kv[0].value.description] = kv[1])
-      return {type: types.object, value: Object.seal(obj)} //prevent adding new fields (but allow mutation of current fields)
+      //seal to prevent adding new fields (but allow mutation of current fields)
+      return {type: types.object, value: Object.seal(obj)}
     })
 
-    //arrays with square brackets. unlike javascript, don't make this also be property access. avoid ambiguity!
+    //arrays with square brackets.
+    //unlike javascript, don't make this also be property access. avoid ambiguity!
    
     var array = OpenClose('[', value, ']', (ary) => ({type: types.array, value: ary}))
     
@@ -101,21 +97,20 @@ module.exports = function (symbols) {
       (fun) => ({type: types.fun, args: fun[0], body: fun[1] ? fun[1] : Nil, scope: null, name: null})
     )
 
-    // used places where a value definitely must happen
-    var expected_value = Expect(value, 'expected acidlisp value')
+    var ternary = Group(And('?', _, expected_value, _, Expect(';'), _, expected_value), (args) => ({type:types.if, left: null, mid: args[0], right:args[1]}))
 
-    var unit = Or(string, number, nil, boolean, variable, symbol, fun, object, array)
+    var infixes =Or(
+      Infix('&', types.and, expected_value),
+      Infix('|', types.or,  expected_value),
+      Infix('=', types.set, expected_value),
+      Infix(':', types.def, expected_value),
+      Infix('@', types.is,  expected_value)
+    )
 
-    return Extend(unit, And(_, Or(
-        Infix('&', types.and, expected_value),
-        Infix('|', types.or,  expected_value),
-        Infix('=', types.set, expected_value),
-        Infix(':', types.def, expected_value),
-        Infix('@', types.is,  expected_value),
-        Group(And('?', _, expected_value, _, Expect(';'), _, expected_value), (args) => ({type:types.if, left: null, mid: args[0], right:args[1]})),
-        Map(invocation, (args) => ({type: types.call, value: null, args})),
-        access
-      )), (left, right) => {
+    var unit = Or(string, number, nil, boolean, symbol, variable, fun, object, array)
+
+    return Extend(unit, And(_, Or(infixes, ternary, invocation, access)),
+      (left, right) => {
         if(right.type === types.call) right.value = left
         else                          right.left = left
         return right
@@ -126,7 +121,7 @@ module.exports = function (symbols) {
 
   return function (src) {
     var g = []
-    if(~_parse(src, 0, src.length, g.push.bind(g))) return g
+    if(~_parse(src, 0, src.length, g.push.bind(g))) return g[0]
     else throw new Error('could not parse')
   }
 }
