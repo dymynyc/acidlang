@@ -6,7 +6,8 @@ function isPrimitive (node) {
     node.type === types.number ||
     node.type === types.string ||
     node.type === types.boolean ||
-    node.type === types.nil
+    node.type === types.nil ||
+    node.type === types.symbol
   )
 }
 
