@@ -69,7 +69,7 @@ function call (fn, args) {
       throw new Error('incorrect number of arguments')
     sig.returns = Unknown()
     for(var i = 0; i < fn.args.length; i++) {
-      var name = fn.args[i]
+      var name = fn.args[i].value
       _scope[name.description] = args[i]
       //remember the type we are using
       sig.args[i].value = args[i].value
