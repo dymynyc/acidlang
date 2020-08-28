@@ -3,6 +3,8 @@ var parse = require('../parse')()
 var ev = require('../eval')
 var check = require('../check')
 
+//inputs that parse correctly but incorrect types.
+
 var inputs = [
   //wrong number of args.
   //in js this would just ignore 2nd arg.
@@ -37,6 +39,8 @@ var inputs = [
   'X:{y: X ? 1 ; 2}',
   //note: this is allowed. the body of the function isn't type checked until it's called.
   //'X:{y:{;X}}'
+  //cannot repeat args
+  '{x x;}'
 ]
 
 var scope = {}

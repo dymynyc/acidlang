@@ -3,6 +3,15 @@ var parse = require('../parse')()
 var inspect = require('util').inspect
 
 var inputs = [
+  '{x; x ? 1 ; {;2}() }', //this works!
+  'x . y',
+  'x . [1]',
+  'x . [ 1]',
+  'x.[ 1 ]',
+//  '{ y y y ; z}'
+  '{;}  ( x )',
+  '[1 2 3 ]',
+ 'foo (x y )',
   'plus(1 2)',
   'def(a 1)',
   'def.a=1',
