@@ -5,6 +5,12 @@ function args (args) {
   return args.map(v=> 'symbol' === typeof v ? v.description : compile(v)).join(', ')
 }
 
+function object_each(obj, fn, acc) {
+  for(var k in obj)
+    acc = fn(acc, k, obj[k])
+  return acc
+}
+
 function get_vars (node) {
   var defs = []
   ;(function R (node) {
@@ -52,26 +58,24 @@ function compile(node) {
     return '(' + compile(node.left) + ' ? true : ' + compile(node.right) + ')' 
   if(type === types.fun) {
     var vars = get_vars(node.body)
-    // if(node.name)
-      // return '(function '+compile(node.name)+' (' + args(node.args)+'){\n'+compile(node.body)+'\n})'
-//    else
-      return '(' + args(node.args).trim() + ') => ' + 
-        (node.body.type === types.block ? "{\n"+compile(node.body)+'\n}' : compile(node.body))
+    return '(' + args(node.args).trim() + ') => ' + 
+      (node.body.type === types.block ? "{\n"+compile(node.body)+'\n}' : compile(node.body))
   }
   if(type === types.object)
-    return 'Object.seal({'+Object.keys(node.value).map(k => k + ':' + compile(node.value[k])).join(', ')+'})'
+    //return 'Object.seal({'+Object.keys(node.value).map(k => k + ':' + compile(node.value[k])).join(', ')+'})'
+    return 'Object.seal({' + object_each(node.value, (s, key, value) =>
+      (s === "" ? "" : s + ", ") + key + ': ' + compile(value), ""
+    ) + '})'
+
   if(type === types.array)
     return '(['+node.value.map(v => compile(v)).join(', ')+'])'
   if(type === types.set || node.type === types.def) {
     if(node.right.type === types.object /*&& isCyclic(node.right.value)*/) {
       var name = node.left.value.description
-      var obj = node.right
-      return '('+ name + '={},' +
-        Object.keys(obj.value).map(function (k) {
-          return name +'.'+k+'='+compile(obj.value[k])
-        }).join(', ')
-        +',Object.seal(' + name + '))'
-      
+      var obj = node.right, s = ''
+      return '('+ name + '={}' +
+        object_each(obj.value, (s, key, value) => ", " + name+'.'+key + '=' + compile(value), "")
+        +',Object.seal(' + name + '))'      
     }
     return '('+node.left.value.description + '='+compile(node.right)+')'
   }
@@ -91,5 +95,5 @@ function compile(node) {
 }
 
 module.exports = function (node) {
-  return '(function () { ' + compile(node) + '}())'
+  return '(function () { ' + (node.type === types.block ? compile(node) : 'return ' + compile(node))+ '}())'
 }
