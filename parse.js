@@ -44,6 +44,10 @@ function Infix (rule, type, subrule) {
   }, type))
 }
 
+function toBlock (body) { 
+  return body ? body.length > 1 ? {type: types.block, body: body} : body[0] : Nil
+}
+
 module.exports = function () {
   //primitive values
   var Nil = {type: types.nil, value: null }
@@ -93,8 +97,8 @@ module.exports = function () {
     //function definitions
     //something weird was going on trying to define functions with empty body?
     var fun = Group(
-      And('{', _, args, _, ';', _, List(value), _, Expect('}')),
-      (fun) => ({type: types.fun, args: fun[0], body: fun[1] ? fun[1] : Nil, scope: null, name: null})
+      And('{', _, args, _, ';', _, List(value, toBlock), _, Expect('}')),
+      (fun) => ({type: types.fun, args: fun[0], body: fun[1], scope: null, name: null})
     )
 
     var ternary = Group(And('?', _, expected_value, _, Expect(';'), _, expected_value), (args) => ({type:types.if, left: null, mid: args[0], right:args[1]}))
@@ -117,7 +121,7 @@ module.exports = function () {
     })
   })
 
-  var _parse = And(_, List(value), _, EOF)
+  var _parse = And(_, List(value, toBlock), _, EOF)
 
   return function (src) {
     var g = []
