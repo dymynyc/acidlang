@@ -16,19 +16,19 @@ function get_vars (node) {
         for(var k in node) R(node[k])
     }
   })(node)
-  return defs.length ? 'var '+defs.map(compile).join(', ')+';' : ''
+  return defs.length ? '  var '+defs.map(compile).join(', ')+';' : ''
 }
 
 function compile(node) {
-  if(Array.isArray(node)) {
+  if(node.type === types.block) {
     var vars = get_vars(node)
-    var exprs = node.map(compile)
+    var exprs = node.body.map(compile)
     if(vars) {
       var last = exprs.pop()
       exprs = exprs.map(v => v + ';\n  ')
-      return '(function () {\n  '+vars+'\n  '+exprs.join('')+'return '+last+'\n})()'
+      return vars+'\n  '+exprs.join('')+'return '+last
     }
-    else return exprs.length > 1? '(' + exprs.join(', ')+')' : exprs[0]
+    else return 'return ' + (exprs.length > 1? '(' + exprs.join(', ')+')' : exprs[0])
   }
   var type = node.type
   if(type === types.boolean)
@@ -44,28 +44,24 @@ function compile(node) {
   if(type === types.nil)
     return 'null'
   if(type === types.if)
-    return '(' + compile(node.left) + ' ? ' + compile(node.mid) + ' : ' + compile(node.right) + ')'
+    return compile(node.left) + ' ? ' + compile(node.mid) + ' : ' +
+      (types.if === node.right.type ? '\n  ' : '') + compile(node.right, node)
   if(type === types.and)
     return '(' + compile(node.left) + ' ? ' + compile(node.right) + ' : false)'
   if(type === types.or)
     return '(' + compile(node.left) + ' ? true : ' + compile(node.right) + ')' 
-  //XXX
   if(type === types.fun) {
     var vars = get_vars(node.body)
-    if(node.name)
-      return '(function '+node.name.description+' (' + args(node.args)+'){'+vars+'return '+compile(node.body)+'})'
-    else
-      return '((' + args(node.args).trim() + ') => ' + 
-        (vars ? '{'+vars+'return '+compile(node.body)+'}' :  compile(node.body))
-      + ')'
+    // if(node.name)
+      // return '(function '+compile(node.name)+' (' + args(node.args)+'){\n'+compile(node.body)+'\n})'
+//    else
+      return '(' + args(node.args).trim() + ') => ' + 
+        (node.body.type === types.block ? "{\n"+compile(node.body)+'\n}' : compile(node.body))
   }
-  //XXX
   if(type === types.object)
     return 'Object.seal({'+Object.keys(node.value).map(k => k + ':' + compile(node.value[k])).join(', ')+'})'
-  //XXX
   if(type === types.array)
     return '(['+node.value.map(v => compile(v)).join(', ')+'])'
-  //XXX
   if(type === types.set || node.type === types.def) {
     if(node.right.type === types.object /*&& isCyclic(node.right.value)*/) {
       var name = node.left.value.description
@@ -79,9 +75,11 @@ function compile(node) {
     }
     return '('+node.left.value.description + '='+compile(node.right)+')'
   }
-  //XXX
   if(type === types.call)
-    return compile(node.value) + '(' + args(node.args) + ')'
+    return (node.value.type === types.fun ?
+      '('+compile(node.value)+')' :
+      compile(node.value)
+    ) + '(' + args(node.args) + ')'
   if(type === types.access) {
     return compile(node.left)+(
         node.static ? '.'+compile(node.mid) : '[' + compile(node.mid) + ']'
@@ -92,4 +90,6 @@ function compile(node) {
   throw new Error('cannot compile:'+inspect(node))
 }
 
-module.exports = compile
+module.exports = function (node) {
+  return '(function () { ' + compile(node) + '}())'
+}

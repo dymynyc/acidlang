@@ -68,14 +68,14 @@ function call (fn, args) {
     if(sig.args.length != args.length)
       throw new Error('incorrect number of arguments')
     sig.returns = Unknown()
+    if(fn.name)
+      _scope[fn.name.value.description] = fn
     for(var i = 0; i < fn.args.length; i++) {
       var name = fn.args[i].value
       _scope[name.description] = args[i]
       //remember the type we are using
       sig.args[i].value = args[i].value
     }
-    if(fn.name)
-      _scope[fn.name.description] = fn
     var v = check(fn.body, _scope)
     return sig.returns = v
   }
@@ -86,10 +86,10 @@ function check (node, scope, allow_cyclic) {
   if(isPrimitive(node))
     return node //{type: types.type, value: node.type}
 
-  if(Array.isArray(node)) {
+  if(node.type === types.block) {
     var value
-    for(var i = 0; i < node.length; i++)
-      value = check(node[i], scope)
+    for(var i = 0; i < node.body.length; i++)
+      value = check(node.body[i], scope)
     return value
   }
 
@@ -151,7 +151,7 @@ function check (node, scope, allow_cyclic) {
       throw new Error('variable already defined:'+name.description+', cannot redefine')
     }
     if(node.right.type === types.fun)
-      return scope[name.description] = bind(node.right, scope, name)
+      return scope[name.description] = bind(node.right, scope, node.left)
     else if(node.right.type === types.object) {
       var _obj = scope[name.description] = {type: types.object, value: null, cyclic: true}
       var obj = check(node.right, scope, true)

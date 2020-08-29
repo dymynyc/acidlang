@@ -51,11 +51,12 @@ function call (fn, args) {
   if(args.length !== fn.args.length)
     throw new Error('incorrect number of arguments for:'+inspect(fn, {colors:true})+', got:'+args)
   var _scope = {__proto__: fn.scope}
+  //TODO: check that name and args do not collide.
   if(fn.name)
-    _scope[fn.name.description] = fn 
+    _scope[fn.name.value.description] = fn 
   for(var i = 0; i < fn.args.length; i++)
     _scope[fn.args[i].value.description] = args[i]
-
+  
 
   //optimization for special case of recursion
   if(fn.name && fn.body.type === types.if) {
@@ -85,9 +86,9 @@ function ev (node, scope, allow_cyclic) {
 
   if(isPrimitive(node)) return node
 
-  if(Array.isArray(node)) {
-    for(var i = 0;i < node.length; i++)
-      value = ev(node[i], scope)
+  if(node.type === types.block) {
+    for(var i = 0;i < node.body.length; i++)
+      value = ev(node.body[i], scope)
     return value
   }
   
@@ -134,7 +135,7 @@ function ev (node, scope, allow_cyclic) {
     if(Object.hasOwnProperty.call(scope, name.description))
       throw new Error('variable already defined:'+name.descripton+', cannot redefine')
     if(node.right.type === types.fun)
-      return scope[name.description] = bind(node.right, scope, name)
+      return scope[name.description] = bind(node.right, scope, node.left)
     else if(node.right.type === types.object) {
       var _obj = scope[name.description] = {type: types.object, value: null, cyclic: true}
       var obj = scope[name.description] = ev(node.right, scope, true)

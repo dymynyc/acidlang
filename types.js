@@ -6,6 +6,7 @@ module.exports = { //T
   
   array:  $('array'),   //{value: [* Object|Array|Primitive]
   fun:    $('fun'),     //{args: [*], body: [E], scope: HT:value, name:sym}
+  block:  $('block'),
   variable: $('variable'),  //{value:sym}
   symbol: $('symbol'),  //{value:sym}
   number: $('number'),  //{value:number}
