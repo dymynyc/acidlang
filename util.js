@@ -33,6 +33,10 @@ function unmap(v) {
 }
 
 function bind (fn, scope, name) {
+  for(var i = 0; i < fn.args.length;i++)
+    for(var j = i+1; j < fn.args.length;j++)
+      if(fn.args[i].value == fn.args[j].value)
+        throw new Error('arg:'+fn.args[i].value.description+' was repeated')
   return {
     type: types.fun,
     args: fn.args,
