@@ -1,6 +1,6 @@
 var types = require('./types')
 var inspect = require('util').inspect
-var {isPrimitive, bind} = require('./util')
+var {isPrimitive, bind, mapValue, unmapValue} = require('./util')
 //take a recursive expression and process it as a loop
 //this is much faster and also prevents stack overflows.
 //when we get to compliation we'll compile it like this too.
@@ -30,6 +30,13 @@ function calls (node, name) {
 }
 
 var True = {types: types.boolean, value: true}
+function toFunction (fun) {
+  return function () {
+    var args = [].slice.call(arguments).map(mapValue)
+    return unmapValue(call(fun, args))
+  }
+}
+
 function call (fn, args) {
   //eval with built in function
   //if(!scope) throw new Error('call without scope')
@@ -38,14 +45,8 @@ function call (fn, args) {
     if(args.length !== fn.length) {
       throw new Error('incorrect number of arguments for:'+fn+', got:'+args)
     }
-    var _value = fn.apply(null, args.map(v => v.value))
-    return (
-      'boolean' === typeof _value ? {type:types.boolean, value: _value} :
-      'number'  === typeof _value ? {type:types.number,  value: _value} :
-      'string'  === typeof _value ? {type:types.string,  value: _value} :
-      null === _value             ? {type: types.nil,    value: _value} :
-      (function () { throw new Error('built ins must only return primitives') })()
-    )
+    var args = args.map(v => v.type === types.fun ? toFunction(v) : unmapValue(v))
+    return mapValue(fn.apply(null, args))
   }
   
   if(args.length !== fn.args.length)
@@ -84,7 +85,7 @@ function ev (node, scope, allow_cyclic) {
   if(!node)  throw new Error('null node')
   if(!scope) throw new Error('missing scope')
 
-  if(isPrimitive(node)) return node
+  if(isPrimitive(node)) return {type:node.type, value: node.value}
 
   if(node.type === types.block) {
     for(var i = 0;i < node.body.length; i++)
@@ -94,7 +95,6 @@ function ev (node, scope, allow_cyclic) {
   
   if(node.type === types.variable) {
     var name = node.value
-//    console.log('scope', scope, scope.__proto__, scope.__proto__.proto__)
     if(!scope[name.description]) throw new Error('variable:'+name.description+' is not defined')
     var value = scope[name.description]
     if(value.type === types.object && value.cyclic && !allow_cyclic)
@@ -126,7 +126,7 @@ function ev (node, scope, allow_cyclic) {
     var ary = new Array(node.value.length)
     for(var i = 0; i <  node.value.length; i++)
       ary[i] = ev(node.value[i], scope)
-    return ary
+    return {type: types.array, value: ary}
   }
   
   if(node.type === types.def) {
@@ -142,8 +142,10 @@ function ev (node, scope, allow_cyclic) {
       _obj.value = obj.value
       return obj
     }
-    else
-     return scope[name.description] = ev(node.right, scope)
+    else {
+      var value = ev(node.right, scope)
+      return scope[name.description] = value
+    }
   }
 
   if(node.type === types.set) {
@@ -156,31 +158,42 @@ function ev (node, scope, allow_cyclic) {
         throw new Error('attempted to assign value of type:'+value.type.description+
           ', to variable:'+name.description+' of type:'+
           scope[name.description].type.description)
-    return scope[name.description] = value
+    if(value.type === types.fun)
+        throw new Error("cannot assign function type, must use : (define)")
+          
+    scope[name.description].value = value.value
+    return scope[name.description]
   }
 
   if(node.type === types.access) {
     var left = ev(node.left, scope)
-    if(left.type !== types.object)
-      throw new Error('access on non-object')
-    var key = node.mid.type === types.variable ? node.mid.value.description : ev(node.mid, scope)
+    var key = node.static ? node.mid : ev(node.mid, scope)
     if(left.type === types.object) {
-      if(!left.value[node.mid.value.description])
+      if(!left.value[key.value.description])
         throw new Error('object did not have property:'+node.mid.value.description)
+      if(!node.right) return left.value[key.value.description]
+      else            return left.value[key.value.description] = ev(node.right, scope)    
+
     }
     else if(left.type === types.array) {
       if(key.type === types.number && (key.value > left.value.length || key.value < 0)) {
         return {type: types.nil, value: null}
-        //throw new Error('array index out of bounds')
       }
-      else
-        if(key.type === types.variable && key.value !== types.length)
-          throw new Error('cannot access property:'+key.value.description+' on array, only length')
+      else if(key.type === types.variable) {
+          if(key.value !== types.length)
+            throw new Error('cannot access property:'+key.value.description+' on array, only length')
+          if(node.right)
+            throw new Error("cannot assign to array length")
+          return {type: types.number, value: left.value.length}
+        }
+      if(!node.right) return left.value[key.value]
+      else            return left.value[key.value] = ev(node.right, scope)    
     }
     else
       throw new Error('cannot access property:'+inspect(key) + ' of '+inspect(left))
-    if(!node.right) return left.value[key]
-    else            return left.value[key] = ev(node.right, scope)    
+
+    if(!node.right) return left.value[key.value.description]
+    else            return left.value[key.value.description] = ev(node.right, scope)    
   }
 
   if(node.type === types.fun)
