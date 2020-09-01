@@ -1,0 +1,21 @@
+{
+  "name": "acidlang",
+  "description": "bootstrapped self hosted fun oriented language",
+  "version": "1.0.0",
+  "homepage": "https://github.com/dymynyc/acidlang",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/dymynyc/acidlang.git"
+  },
+  "dependencies": {
+    "stack-expression": "^3.0.0",
+  },
+  "devDependencies": {
+  },
+  "scripts": {
+    "test": "tape test/*.*",
+  },
+  "bin": "./bin.js",
+  "author": "@EMovhfIrFk4NihAKnRNhrfRaqIhBv1Wj8pTxJNgvCCY=.ed25519",
+  "license": "MIT"
+}
