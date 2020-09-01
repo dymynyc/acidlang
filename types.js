@@ -21,5 +21,6 @@ module.exports = { //T
   typesig:$('typesig'),
   type:   $('type'),
   access: $('access'),
-  is:     $('is')
+  is:     $('is'),
+  length: $('length')
 }
