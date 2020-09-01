@@ -6,14 +6,14 @@ args:{ary; join(map(ary compile) ", ") }
 "(no comments yet, but can put strings in a block)"
 
 each:{ary reduce init;
-  Array.isArray(ary) ? nil ; crash("not an array")
   R: {acc i; gt(ary.length i) ? R(reduce(acc ary.[i]) add(1 i)) ; acc}
   R(init 0)}
 
-join:{a str; each(a {acc item; eq(acc "") ? item ; concat([acc str item])} "")}
+join:{a str;
+each(a {acc item; eq(acc "") ? item ; concat([acc str item])} "")}
 
 map:{ary map;
-  len: ary.length _ary: Array(len)
+  len: ary.length _ary: createArray(len)
 
   R: {i; gt(len i) ? {; _ary.[i] = map(ary.[i]) R(add(1 i))}() ; _ary}
   R(0)
@@ -22,13 +22,14 @@ map:{ary map;
 concat:{ary; eq(ary.length 0) ? ary.[0] ; each(ary {acc item; cat(acc item)} "")}
 
 get_vars:{node;
-  vars: ""
+  acc: ""
   eachR:{ary; each(ary {acc e; R(e)} nil)}
   R:{node;
     eq(node.type $block) ? eachR(node.body) ; 
     eq(node.type $fun) ? nil ;
     eq(node.type $def) ? {;
-      vars = concat(eq(vars "") ?  ["var " compile(node.left)] ; [vars ", " compile(node.left)])
+      s: compile(node.left)
+      acc = concat(eq(acc "") ?  ["var " s] ; [acc ", " s])
       R(node.right)
     }() ;
     eq(node.type $set) ? R(node.right) ;
@@ -39,7 +40,7 @@ get_vars:{node;
     nil
   }
   R(node)
-  eq(vars "") ? "" ; concat([vars "; "])
+  eq(acc "") ? "" ; concat([acc "; "])
 }
 
 compile_fun: {node name; 
@@ -94,6 +95,6 @@ compile:{node;
     eq(type $object)  ? ["{"
       object_each(node.value {s k v; concat([s {; eq(s "") ? "" ; ", " }() stringify(k) ": " compile(v)])} "")
                          "}"] ;
-    [ JSON.stringify(node)]
+    [ crash(node)]
   )
 }
