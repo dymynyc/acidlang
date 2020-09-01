@@ -9,24 +9,26 @@ var compile = require('../compile-js')
 var $ = require('../symbols')
 var data = require('./data/expressions')
 var types = require('../types')
+var {mapValue} = require('../util')
 
-var scope = {
-  stringify: function (x) { return 'symbol' === typeof x ? x.description : JSON.stringify(x) },
-  cat: function (a, b) {
-    return a+b
-  },
-  print: function (x) { console.log('print', inspect(x, {colors: true, depth: 100})); return x },
-  add: function (a, b) { return a + b },
-  and: function (a, b) { return a & b },
-  mul: function (a, b) { return a * b },
-  eq: function (a, b) { return a === b },
-  gt: function (a, b) { return a > b },
-  i32: {type: types.type, value: types.number},
-  object_each: function object_each(obj, fn, acc) {
-    for(var k in obj) acc = fn(acc, $(k), obj[k])
-    return acc
-  }
-}
+var scope = require('../env')
+// {
+  // stringify: function (x) { return 'symbol' === typeof x ? x.description : JSON.stringify(x) },
+  // cat: function (a, b) {
+    // return a+b
+  // },
+  // print: function (x) { console.log('print', inspect(x, {colors: true, depth: 100})); return x },
+  // add: function (a, b) { return a + b },
+  // and: function (a, b) { return a & b },
+  // mul: function (a, b) { return a * b },
+  // eq: function (a, b) { return a === b },
+  // gt: function (a, b) { return a > b },
+  // i32: {type: types.type, value: types.number},
+  // object_each: function object_each(obj, fn, acc) {
+    // for(var k in obj) acc = fn(acc, $(k), obj[k])
+    // return acc
+  // }
+//}
 
 var ev = require('../eval')
 //var _compile = ev(ast, scope)
@@ -34,9 +36,17 @@ var ev = require('../eval')
 //console.log(compile)
 
 function ev_js(src, scope) {
-  with(scope) {
-    return eval(src)
-  }
+  var keys = Object.keys(scope).concat('$')
+  scope['$'] = $
+//  with(scope) {
+    var f = new Function(keys, 'return '+src)
+//    console.log("EVAL", f.toString())
+    var values = keys.map(k => scope[k] || $)
+    var start = Date.now()
+    var returns = f.apply(null, values)
+    console.log('ev', Date.now()-start)
+    return returns
+  //}
 }
 
 //console.log(ev(ast.concat(parse('compile({type:$boolean value:true})')), scope))
@@ -60,18 +70,46 @@ function test(name, compiler) {
   console.log()
 }
 test('js', compile)
+var start = Date.now()
 var src2 = compile(ast)
-var compile2 = ev_js(src2, {__proto__:scope})
+console.log("compile js", Date.now() - start)
+var compile2 = ev_js(src2, scope)
 test('js(acid)', compile2)
 console.log(src2)
+var start = Date.now()
 var src3 = compile2(ast)
-console.log(src3)
-var compile3 = ev_js(src3, {__proto__:scope})
+console.log("self compile js(acid)", Date.now()-start)
+//console.log(src3)
+var compile3 = ev_js(src3, scope)
 test('js(acid)(acid)', compile2)
 
 //self compiled self hosted compiler should equal self compiled self self hosted compiler
+var start = Date.now()
 var src4 = compile3(ast)
-console.log(src4)
+console.log("self compile (js(acid)(acid)", Date.now()-start)
+//console.log(src4)
+//don't run it just verify output is equal
 assert.equal(src4, src3)
-//var compile3 = ev_js(src3, {__proto__:scope})
-//test('js(acid)(acid)', compile2)
+
+var ev_compile = ev(ast, {__proto__: scope})
+
+function compile5 (ast) {
+  ast =  mapValue(ast)
+  var src = ev({
+      type: types.call,
+      value: {type: types.variable, value: $('compile')},
+      args: [ast]
+  }, {
+        __proto__: scope,
+        compile: ev_compile,
+      }).value
+  console.log('value', src)
+  return src
+}
+
+test('eval', compile5)
+//assert that interpreted compiler also matches the self hosted output
+var start = Date.now()
+var src5 = compile5(ast)
+console.log('self-compile:', Date.now()-start)
+assert.equal(src5, src3)
