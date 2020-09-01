@@ -1,26 +1,28 @@
 # acidlang
 
-`acid` is a new _fun_oriented_ programming language.
+`acid` is a new _fun oriented_ programming language.
 
 goals:
 
 * so simple you can understand everything
 * self hosting
 * compiles to wasm
+* bootstrapped
 
-by simple I really do mean simple. 
+by simple I really do mean _simple_. 
 
 plan:
-* write a parser.
-* write an evaluator. implementation must be restricted to js features acid will support.
-* compile that to javascript.
-* write a type checker. (to enforce restrictions that they compiled js wouldn't have)
+* write a parser. (done)
+* write an evaluator. implementation must be restricted to js features acid will support. (done)
+* compile that to javascript. (done)
+* write a type checker. (to enforce restrictions that they compiled js wouldn't have) (partially done)
 * module system
 * start to reimplement parts in javascript-compiled acid.
   because it's implemented in js, and compiles to js this can be done in step by step.
+  * acid compiler now self hosted
 * implement stack machine (like wasm)
 * compile to stack machine (this will take a few transformations...)
-* done.
+* stop development: maximum stability.
 
 ## language semantics
 
