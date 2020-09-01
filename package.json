@@ -8,12 +8,13 @@
     "url": "git://github.com/dymynyc/acidlang.git"
   },
   "dependencies": {
-    "stack-expression": "^3.0.0",
+    "stack-expression": "3"
   },
   "devDependencies": {
+    "tape": "^5.0.1"
   },
   "scripts": {
-    "test": "tape test/*.*",
+    "test": "tape test/*.*"
   },
   "bin": "./bin.js",
   "author": "@EMovhfIrFk4NihAKnRNhrfRaqIhBv1Wj8pTxJNgvCCY=.ed25519",
