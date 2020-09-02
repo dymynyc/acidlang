@@ -79,11 +79,16 @@ function compile(node, insert) {
       }
       return '('+node.left.value.description + '='+C(node.right)+')'
     }
-    if(type === types.call)
+    if(type === types.call) {
+      if(node.value.type === types.variable) {
+        var name = node.value.value.description
+        if(insert[name]) return insert[name].apply(null, node.args.map(C))
+      }
       return (node.value.type === types.fun ?
         '('+C(node.value)+')' :
         C(node.value)
       ) + '(' + args(node.args) + ')'
+    }
     if(type === types.access) {
       return C(node.left)+(
           node.static ? '.'+C(node.mid) : '[' + C(node.mid) + ']'
