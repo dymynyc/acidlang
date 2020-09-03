@@ -28,6 +28,8 @@ function unmapValue(v) {
   }
   else if(isPrimitive(v) || types.type === v.type)
     return v.value
+  else if('function' === typeof v)
+    return v
   else
     throw new Error('cannot unmap node:'+inspect(v))
   
@@ -47,6 +49,8 @@ function mapValue (ast) {
   if(Array.isArray(ast))
     return {type: types.array, value: ast.map(mapValue)}
   //must be object...
+  if('function' === typeof ast)
+      return ast
   var obj = {}
   for(var k in ast)
     obj[k] = mapValue(ast[k])
