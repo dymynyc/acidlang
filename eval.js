@@ -42,12 +42,12 @@ function call (fn, args) {
   //if(!scope) throw new Error('call without scope')
   if(!fn) throw new Error('cannot call undefined')
   if('function' === typeof fn) {
-    if(args.length !== fn.length) {
-      throw new Error('incorrect number of arguments for:'+fn+', got:'+args)
-    }
+    //if(args.length !== fn.length)
+    //  throw new Error('incorrect number of arguments for:'+fn+', got:'+args)
     var args = args.map(v => v.type === types.fun ? toFunction(v) : unmapValue(v))
     return mapValue(fn.apply(null, args))
   }
+  if(fn.type !== types.fun) throw new Error('cannot call non-function')
   
   if(args.length !== fn.args.length)
     throw new Error('incorrect number of arguments for:'+inspect(fn, {colors:true})+', got:'+args)
