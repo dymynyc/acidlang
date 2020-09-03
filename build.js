@@ -1,7 +1,7 @@
 var fs = require('fs')
 var path = require('path')
 var env = require('./env')
-var parse = require('./parse')()
+var parse = require('./handwritten/parse')()
 var compile = require('./handwritten-compile-js')
 var resolve = require('./resolve')('node_modules', '.al', JSON.parse, "package.json")
 var env = require('./env')

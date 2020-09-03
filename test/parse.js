@@ -1,4 +1,4 @@
-var parse = require('../parse')()
+var hand_parser = require('../handwritten/parse')()
 
 var inspect = require('util').inspect
 
@@ -8,7 +8,6 @@ var inputs = [
   'x . [1]',
   'x . [ 1]',
   'x.[ 1 ]',
-//  '{ y y y ; z}'
   '{;}  ( x )',
   '[1 2 3 ]',
  'foo (x y )',
@@ -52,11 +51,16 @@ var inputs = [
   'a.[1]',
   'a.[0]=1',
 ]
-
-for(var i = 0; i < inputs.length; i++) {
-  console.log("parse:", inputs[i])
-  console.log(inspect(parse(inputs[i]), {depth: Infinity, colors: true}))
+function tests (name, parser) {
+  console.log(name)
+  for(var i = 0; i < inputs.length; i++) {
+    console.log("parse:", inputs[i])
+    console.log(inspect(parser(inputs[i]), {depth: Infinity, colors: true}))
+  }
 }
+tests('handwritten/parser', hand_parser)
+//tests('compiled/parser', acid_parser)
+
 //a ? b : c
 
 //a ? b_a ? b_b : b_c : c

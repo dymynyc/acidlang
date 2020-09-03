@@ -1,5 +1,5 @@
 var assert = require('assert')
-var parse = require('../parse')()
+var parse = require('../handwritten/parse')()
 var ev = require('../eval')
 var check = require('../check')
 
