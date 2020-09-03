@@ -3,7 +3,7 @@ var path = require('path')
 var assert = require('assert')
 var inspect = require('util').inspect
 var compile_src = fs.readFileSync(path.join(__dirname, '../compile-js.al'), 'utf8')
-var parse = require('../parse')()
+var parse = require('../handwritten/parse')()
 var ast = parse(compile_src)
 var hand_compile = require('../handwritten-compile-js')
 //compiled via handwritten
