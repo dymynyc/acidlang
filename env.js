@@ -25,5 +25,6 @@ module.exports = Object.freeze({
       acc = fn(acc, $(k), obj[k])
     }
     return acc
-  }
+  },
+  $: $
 })
