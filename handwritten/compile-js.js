@@ -1,4 +1,4 @@
-var types = require('./types')
+var types = require('../types')
 var inspect = require('util').inspect
 
 function object_each(obj, fn, acc) {
@@ -74,15 +74,15 @@ function compile(node, insert) {
         var name = node.left.value.description
         var obj = node.right, s = ''
         return '('+ name + '={}' +
-          object_each(obj.value, (s, key, value) => ", " + name+'.'+key + '=' + C(value), "")
+          object_each(obj.value, (s, key, value) => s + ", " + name+'.'+key + '=' + C(value), "")
           +',Object.seal(' + name + '))'      
       }
+      console.log(node)
       return '('+node.left.value.description + '='+C(node.right)+')'
     }
     if(type === types.call) {
       if(node.value.type === types.variable && insert && 'object' === typeof insert) {
         var name = node.value.value.description
-        console.error("INSERT", name, node, insert[name])
         if(insert[name]) return insert[name].apply(null, node.args.map(C))
       }
       return (node.value.type === types.fun ?

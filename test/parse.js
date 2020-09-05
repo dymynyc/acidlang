@@ -1,13 +1,17 @@
 var hand_parser = require('../handwritten/parse')()
-
+var acid_parser = require('../parse')()
+var fs = require('fs')
+var path = require('path')
+var src = fs.readFileSync(path.join(__dirname, '../parse.al'), 'utf8')
 var inspect = require('util').inspect
 
 var inputs = [
-  '{x; x ? 1 ; {;2}() }', //this works!
   'x . y',
-  'x . [1]',
+  'x. [1]',
+  'x.\ny',
   'x . [ 1]',
   'x.[ 1 ]',
+  '{x; x ? 1 ; {;2}() }', //this works!
   '{;}  ( x )',
   '[1 2 3 ]',
  'foo (x y )',
@@ -50,6 +54,7 @@ var inputs = [
   'a ? b ? c ; d ; e',
   'a.[1]',
   'a.[0]=1',
+  src
 ]
 function tests (name, parser) {
   console.log(name)
@@ -59,7 +64,7 @@ function tests (name, parser) {
   }
 }
 tests('handwritten/parser', hand_parser)
-//tests('compiled/parser', acid_parser)
+tests('compiled/parser', acid_parser)
 
 //a ? b : c
 

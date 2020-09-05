@@ -5,7 +5,7 @@ var inspect = require('util').inspect
 var compile_src = fs.readFileSync(path.join(__dirname, '../compile-js.al'), 'utf8')
 var parse = require('../handwritten/parse')()
 var ast = parse(compile_src)
-var hand_compile = require('../handwritten-compile-js')
+var hand_compile = require('../handwritten/compile-js')
 //compiled via handwritten
 var compiled_compile = require('../compile-js')
 var $ = require('../symbols')
