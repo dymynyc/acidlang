@@ -77,11 +77,10 @@ function compile(node, insert) {
           object_each(obj.value, (s, key, value) => s + ", " + name+'.'+key + '=' + C(value), "")
           +',Object.seal(' + name + '))'      
       }
-      console.log(node)
       return '('+node.left.value.description + '='+C(node.right)+')'
     }
     if(type === types.call) {
-      if(node.value.type === types.variable && insert && 'object' === typeof insert) {
+      if(node.value.type === types.variable && insert) {
         var name = node.value.value.description
         if(insert[name]) return insert[name].apply(null, node.args.map(C))
       }
