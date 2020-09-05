@@ -74,11 +74,10 @@ function ev_ab(node, scope) {
 }
 
 var True = {type: types.boolean, value: true}
-var False = {type: types.boolean, value: true}
+var False = {type: types.boolean, value: false}
 
 function ev_if(a,b,c, scope) {
-  if(ev_ab(a, scope).value === true) return ev(b, scope)
-  else return ev(c, scope)  
+  return ev_ab(a, scope).value === true ? ev(b, scope) : ev(c, scope)  
 }
 
 function ev (node, scope, allow_cyclic) {
