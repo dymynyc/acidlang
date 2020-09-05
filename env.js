@@ -18,6 +18,10 @@ module.exports = Object.freeze({
   createSymbol: function (s) {
     return $(s)
   },
+  has: function (object, key) {
+    console.log(["HAS", object, key])
+    return object[key] != undefined
+  },
   add: function (a, b) { return a + b },
   and: function (a, b) { return a & b },
   mul: function (a, b) { return a * b },
