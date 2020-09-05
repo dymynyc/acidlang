@@ -7,14 +7,26 @@ module.exports = Object.freeze({
     if('string' !== typeof b) throw new Error('cat: b *must* be a string')
     return a+b
   },
+  charCodeAt: function (string, i) {
+    if('string' !== typeof string) throw new Error('must be string')
+    if('number' !== typeof i) throw new Error('must be integer')
+    return string.charCodeAt(i)
+  },
   createArray: function (n) {
     return new Array(n)
+  },
+  createSymbol: function (s) {
+    return $(s)
   },
   add: function (a, b) { return a + b },
   and: function (a, b) { return a & b },
   mul: function (a, b) { return a * b },
-  eq: function (a, b) { return a === b },
-  gt: function (a, b) { return a > b },
+  eq:  function (a, b) { return a === b },
+  neq: function (a, b) { return a !== b },
+  gt:  function (a, b) { return a >  b },
+  gte: function (a, b) { return a >= b },
+  lt:  function (a, b) { return a <  b },
+  lte: function (a, b) { return a <= b },
   i32: {type: types.type, value: types.number},
   print: function (s) {
     console.log(s)
@@ -25,6 +37,9 @@ module.exports = Object.freeze({
       acc = fn(acc, $(k), obj[k])
     }
     return acc
+  },
+  crash: function (message) {
+    throw new Error(message)
   },
   $: $
 })
