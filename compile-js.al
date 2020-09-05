@@ -1,5 +1,3 @@
-args:{ary; join(map(ary compile) ", ") }
-
 "TODO: needs object support, then should be able to compile itself"
 
 "todo: make these into a library..."
@@ -19,8 +17,6 @@ map:{ary map;
   R(0)
 }
 
-concat:{ary; eq(ary.length 0) ? ary.[0] ; each(ary {acc item; cat(acc item)} "")}
-
 get_vars:{node;
   acc: ""
   eachR:{ary; each(ary {acc e; R(e)} nil)}
@@ -28,7 +24,7 @@ get_vars:{node;
     eq(node.type $block) ? eachR(node.body) ; 
     eq(node.type $fun) ? nil ;
     eq(node.type $def) ? {;
-      s: compile(node.left)
+      s: stringify(node.left.value)
       acc = concat(eq(acc "") ?  ["var " s] ; [acc ", " s])
       R(node.right)
     }() ;
@@ -43,58 +39,60 @@ get_vars:{node;
   eq(acc "") ? "" ; concat([acc "; "])
 }
 
-compile_fun: {node name; 
-  vars: get_vars(node.body)
-  concat(
-    eq(name nil)
-    ? ["(" args(node.args) ") => "
-        concat(eq(vars "")
-        ? ["(" compile(node.body) ")"]
-        ; ["{" vars "return " compile(node.body) "}"])
-      ]
-    ; ["(function " compile(name) " (" args(node.args) ") {"
-        vars "return " compile(node.body) "})"]
-  )
-}
 
-compile:{node;
-  type:node.type
-  concat(
-    eq(type $boolean) ? [stringify(node.value)] ;
-    eq(type $number)  ? [stringify(node.value)] ;  
-    eq(type $string)  ? [stringify(node.value)] ;  
-    eq(type $variable)? [stringify(node.value)] ;  
-    eq(type $symbol)  ? ["$(\"" stringify(node.value) "\")"] ;
-    eq(type $nil)     ? ["null"] ;
-    eq(type $is)      ? ["true"] ;
-    {; eq(type $def) | eq(type $set) }()
-                      ? ["(" stringify(node.left.value) " = "
-                          eq(node.right.type $fun) ? compile_fun(node.right node.left) ;
-                          eq(node.right.type $object) ? concat([object_each(node.right.value {s k v;
-                            concat([s
-                              ", "  stringify(node.left.value)
-                              "."   stringify(k)
-                              "=" compile(v)
-                            ])} "{}") ", " stringify(node.left.value)]) ;
-                          compile(node.right)
-                          ")"] ;
-    eq(type $if)      ? ["(" compile(node.left)  " ? "
-                                     compile(node.mid)   " : "
-                                     compile(node.right)  ")"] ;
-    eq(type $and)     ? ["(" compile(node.left)  " ? "  
-                                     compile(node.right) " : false )"] ;
-    eq(type $or)      ? ["(" compile(node.left) " ? true : "
-                                     compile(node.right) ")"] ;
-    eq(type $access)  ? ["(" compile(node.left)
-                             concat(node.static ? ["." compile(node.mid)] ; ["[" compile(node.mid) "]"])
-                             eq(node.right nil) ? "" ; concat(["=" compile(node.right)]) ")"] ;
-    eq(type $call)    ? [ eq(node.value.type $fun) ? concat(["(" compile(node.value) ")"]) ; compile(node.value) "(" args(node.args) ")"] ;
-    eq(type $fun)     ? [ compile_fun(node nil) ] ;
-    eq(type $array)   ? ["[" args(node.value) "]"] ;
-    eq(type $block)   ? ["(" args(node.body) ")"] ;
-    eq(type $object)  ? ["{"
-      object_each(node.value {s k v; concat([s {; eq(s "") ? "" ; ", " }() stringify(k) ": " compile(v)])} "")
-                         "}"] ;
-    [ crash(node)]
-  )
+concat:{ary; eq(ary.length 0) ? ary.[0] ; each(ary {acc item; cat(acc item)} "")}
+
+compile:{node insert;
+  args:{ary; join(map(ary C) ", ") }
+  compile_fun: {node name; 
+    vars: get_vars(node.body)
+    concat(
+      eq(name nil)
+      ? ["(" args(node.args) ") => "
+          concat(eq(vars "")
+          ? ["(" C(node.body) ")"]
+          ; ["{" vars "return " C(node.body) "}"])
+        ]
+      ; ["(function " C(name) " (" args(node.args) ") {"
+          vars "return " C(node.body) "})"]
+    )
+  }
+  C: {node;
+    type:node.type
+    concat(
+      eq(type $boolean) ? [stringify(node.value)] ;
+      eq(type $number)  ? [stringify(node.value)] ;  
+      eq(type $string)  ? [stringify(node.value)] ;  
+      eq(type $variable)? [stringify(node.value)] ;  
+      eq(type $symbol)  ? ["$(\"" stringify(node.value) "\")"] ;
+      eq(type $nil)     ? ["null"] ;
+      eq(type $is)      ? ["true"] ;
+      {; eq(type $def) | eq(type $set) }()
+                        ? ["(" stringify(node.left.value) " = "
+                            eq(node.right.type $fun) ? compile_fun(node.right node.left) ;
+                            eq(node.right.type $object) ? concat([object_each(node.right.value {s k v;
+                              concat([s
+                                ", "  stringify(node.left.value)
+                                "."   stringify(k)
+                                "=" C(v)
+                              ])} "{}") ", " stringify(node.left.value)]) ;
+                            C(node.right)
+                            ")"] ;
+      eq(type $if)      ? ["(" C(node.left) " ? " C(node.mid) " : " C(node.right)  ")"] ;
+      eq(type $and)     ? ["(" C(node.left) " ? " C(node.right) " : false )"] ;
+      eq(type $or)      ? ["(" C(node.left) " ? true : " C(node.right) ")"] ;
+      eq(type $access)  ? ["(" C(node.left)
+                               concat(node.static ? ["." C(node.mid)] ; ["[" C(node.mid) "]"])
+                               eq(node.right nil) ? "" ; concat(["=" C(node.right)])
+                          ")" ] ;
+      eq(type $call)    ? [ eq(node.value.type $fun) ? concat(["(" C(node.value) ")"]) ; C(node.value) "(" args(node.args) ")"] ;
+      eq(type $fun)     ? [ compile_fun(node nil) ] ;
+      eq(type $array)   ? ["[" args(node.value) "]"] ;
+      eq(type $block)   ? ["(" args(node.body) ")"] ;
+      eq(type $object)  ? ["{"
+        object_each(node.value {s k v; concat([s {; eq(s "") ? "" ; ", " }() stringify(k) ": " C(v)])} "")
+                           "}"] ;
+      [ crash(node)]
+    )}
+    C(node)
 }
