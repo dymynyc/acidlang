@@ -63,7 +63,7 @@ function ev_compile (ast) {
   var src = ev({
     type: types.call,
     value: {type: types.variable, value: $('compile')},
-    args: [ast]
+    args: [ast, {type: types.nil, value: null}]
   }, {
     __proto__: scope,
     compile: ev_compile_fun,
