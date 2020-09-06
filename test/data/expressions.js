@@ -5,6 +5,8 @@ exports.inputs = [
   '{a b; add(a b)}(3 4)',
   'true ? 10 ; -10',
   'true & true & false',
+  'false & true & true',
+  '{;false & true & true}()',
   'true | false',
   '{x; eq(and(x 1) 1) ? true ; false}(1)',
   '{x; eq(and(x 1) 1) ? true ; false}(4)',
@@ -22,7 +24,7 @@ exports.inputs = [
   'Obj:{x:i32 y:i32 z:i32} obj:{x:1 y:1 z:1} obj@Obj',
   'a:{self:a}', //cyclic!
   'deep:{a:{b:{c:deep}}}',
-  '$object'
+ '$object'
 ]
 
 function T (s, v) { return {type: s, value: v === undefined ? null : v}}
@@ -38,7 +40,7 @@ cyclic2.value.a.value.b.value.c = {type: types.object, value: cyclic2.value, cyc
 
 exports.outputs = [
   N(3), N(7), N(10),
-  B(false), B(true), B(true), B(false),
+  B(false), B(false), B(false), B(true), B(true), B(false),
   N(1), N(1*2*3*4*5*6*7), N(65536),
   O({x: N(3), y: N(4)}),
   N(3), N(30), N(7), N(123),
@@ -54,6 +56,6 @@ cyclic_raw.self = cyclic_raw
 var cyclic2_raw = {a:{b:{c:null}}}
 cyclic2_raw.a.b.c = cyclic2_raw
 exports.output_values = [
-  3,7,10,false,true,true,false,1,1*2*3*4*5*6*7,65536,
+  3,7,10,false,false, false,true, true,false,1,1*2*3*4*5*6*7,65536,
   {x:3,y:4},3,30,7,123,987,349783,true,true, cyclic_raw, cyclic2_raw, types.object
 ]
