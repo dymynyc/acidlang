@@ -1,3 +1,4 @@
+#! /usr/bin/env node
 var fs = require('fs')
 var path = require('path')
 var env = require('./env')
@@ -9,6 +10,10 @@ var {wrap, mapValue, unmapValue} = require('./util')
 
 var compile = require('./handwritten/compile-js')
 var $ = require('./symbols')
+
+function toRelative(s) {
+  return './' + path.normalize('./'+ s)
+}
 
 function run (entry, context) {
   function load(module, from) {
@@ -69,8 +74,10 @@ function build (entry, context) {
     return 'require('+JSON.stringify(outfile)+')'
   }
 
-  build(entry, context) 
-
+  if(Array.isArray(entry))
+    entry.forEach(entry => build(toRelative(entry), context))
+  else
+    build(toRelative(entry), context)
 }
 
 if(~module.parent) {
@@ -78,7 +85,7 @@ if(~module.parent) {
   if(cmd === 'run')
     run(process.argv[3], process.cwd())
   else if(cmd === 'build')
-    build(process.argv[3], process.cwd())
+    build(process.argv.slice(3), process.cwd())
   else if(cmd === 'parse')
     console.log(inspect(parse(fs.readFileSync(process.argv[3], 'utf8')), {colors: true, depth: 100}))
 }

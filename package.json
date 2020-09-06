@@ -14,7 +14,8 @@
     "tape": "^5.0.1"
   },
   "scripts": {
-    "test": "tape test/*.*"
+    "build": "./bin.js build *.al",
+    "test": "./bin.js build *.al && tape test/*.*"
   },
   "bin": "./bin.js",
   "author": "@EMovhfIrFk4NihAKnRNhrfRaqIhBv1Wj8pTxJNgvCCY=.ed25519",
