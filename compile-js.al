@@ -7,8 +7,7 @@ each:{ary reduce init;
   R: {acc i; gt(ary.length i) ? R(reduce(acc ary.[i]) add(1 i)) ; acc}
   R(init 0)}
 
-join:{a str;
-each(a {acc item; eq(acc "") ? item ; concat([acc str item])} "")}
+join:{a str; each(a {acc item; eq(acc "") ? item ; concat([acc str item])} "")}
 
 map:{ary map;
   len: ary.length _ary: createArray(len)
@@ -39,8 +38,7 @@ get_vars:{node;
   eq(acc "") ? "" ; concat([acc "; "])
 }
 
-
-concat:{ary; eq(ary.length 0) ? ary.[0] ; each(ary {acc item; cat(acc item)} "")}
+concat:{ary; eq(ary.length 0) ? ary.[0] ; each(ary cat "")}
 
 compile:{node insert;
   args:{ary; join(map(ary C) ", ") }
