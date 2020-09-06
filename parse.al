@@ -65,9 +65,9 @@ args: List(variable)
 
     access: And("." _ Or(
       Group(And(variable assignment) {args;
-        {type: $access left: nil args: mid: args.[0] right: args.[1]}})
+        {type: $access left: nil mid: mid: args.[0] right: eq(args.length 2) ? args.[1] ; nil static: true}})
       Group(And("[" _ value _ "]" assignment) {args;
-        {type: $access left: nil mid: args.[0] right: eq(args.length 2) ? args.[1] ; nil}})
+        {type: $access left: nil mid: args.[0] right: eq(args.length 2) ? args.[1] ; nil static: false}})
     ))
       
     key_value: Group(And(variable _ ":" _ Expect(value)) {kv; {key: kv.[0] value: kv.[1]}})
