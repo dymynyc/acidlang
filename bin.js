@@ -10,7 +10,6 @@ var {wrap, mapValue, unmapValue} = require('./util')
 var compile = require('./handwritten/compile-js')
 var $ = require('./symbols')
 
-
 function run (entry, context) {
   function load(module, from) {
     var target = resolve(module, from)
@@ -47,7 +46,7 @@ function build (entry, context) {
         }
       })(k, env[k])
 
-    var out = compile(ast, {
+    var _scope = {
       import: function (req) {
         return build(JSON.parse(req), path.dirname(target))
       },
@@ -55,6 +54,10 @@ function build (entry, context) {
         return '(x=>(console.log(x),x))('+x+')'
       },
       __proto__: scope
+    }
+    var out = compile(ast, function (sym, args) {
+      if(!args) return !!_scope[sym.description]
+      return _scope[sym.description].apply(null, args)
     })
 
     var outfile = target.substring(0, target.length - path.extname(target).length) + '.js'

@@ -85,7 +85,13 @@ compile:{node insert;
                                concat(node.static ? ["." C(node.mid)] ; ["[" C(node.mid) "]"])
                                eq(node.right nil) ? "" ; concat(["=" C(node.right)])
                           ")" ] ;
-      eq(type $call)    ? [ eq(node.value.type $fun) ? concat(["(" C(node.value) ")"]) ; C(node.value) "(" args(node.args) ")"] ;
+      eq(type $call)    ? [
+          {; eq(node.value.type $variable) & neq(insert(node.value) nil) }()
+                                   ? insert(node.value map(node.args C)) ;
+          eq(node.value.type $fun) ? concat(["(" C(node.value) ")"]) ;
+                                     C(node.value)
+          
+          "(" args(node.args) ")"] ;
       eq(type $fun)     ? [ compile_fun(node nil) ] ;
       eq(type $array)   ? ["[" args(node.value) "]"] ;
       eq(type $block)   ? ["(" args(node.body) ")"] ;

@@ -28,6 +28,8 @@ function ev_js(src, scope) {
   //}
 }
 
+
+function nop () { return null }
 //console.log(ev(ast.concat(parse('compile({type:$boolean value:true})')), scope))
 console.log(ast)
 //var ast2 = parse('true')
@@ -38,14 +40,14 @@ function test(name, compiler) {
   data.inputs.forEach(function (v, i) {
     console.log('input :', v)
     var ast2 = parse(v) //'{a b; x:add(a b)}')
-    var dst = compiler(ast2)
+    var dst = compiler(ast2, nop)
     console.log('output:', dst)
     var v = ev_js(dst, scope)
     assert.deepEqual(v, data.output_values[i])
   })
 
   var start = Date.now()
-  var dst = compiler(ast)
+  var dst = compiler(ast, nop)
   console.log('self-compile time:', Date.now()-start)
   console.log()
   return dst
@@ -63,10 +65,11 @@ function ev_compile (ast) {
   var src = ev({
     type: types.call,
     value: {type: types.variable, value: $('compile')},
-    args: [ast, {type: types.nil, value: null}]
+    args: [ast, {type: types.variable, value: $('nop')}]
   }, {
     __proto__: scope,
     compile: ev_compile_fun,
+    nop: nop
   }).value
   return src
 }
