@@ -8,7 +8,8 @@ var {inspect} = require('util')
 var resolve = require('./resolve')('node_modules', '.al', JSON.parse, "package.json")
 var {wrap, mapValue, unmapValue} = require('./util')
 
-var compile = require('./handwritten/compile-js')
+//var compile = require('./handwritten/compile-js')
+var compile = require('./compile-js')
 var $ = require('./symbols')
 
 function toRelative(s) {
@@ -61,7 +62,8 @@ function build (entry, context) {
       __proto__: scope
     }
     var out = compile(ast, function (sym, args) {
-      if(!args) return !!_scope[sym.description]
+//      console.log("INSERT", sym, !!_scope[sym.description], args) 
+      if(!args) return !!_scope[sym.description] ? sym : null
       return _scope[sym.description].apply(null, args)
     })
 
