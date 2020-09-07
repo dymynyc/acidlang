@@ -80,7 +80,7 @@ function compile(node, insert) {
     }
     if(type === types.call) {
       if(node.value.type === types.variable && insert) {
-        if(insert(node.value.value)) return insert(node.value.value, node.args.map(C))
+        if(insert(node.value.value) !== null) return insert(node.value.value, node.args.map(C))
       }
       return (node.value.type === types.fun ?
         '('+C(node.value)+')' :
