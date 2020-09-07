@@ -3,8 +3,8 @@ var $ = require('./symbols')
 module.exports = Object.freeze({
   stringify: function (x) { return 'symbol' === typeof x ? x.description : JSON.stringify(x) },
   cat: function (a, b) {
-    if('string' !== typeof a) throw new Error('cat: a *must* be a string')
-    if('string' !== typeof b) throw new Error('cat: b *must* be a string')
+    if('string' !== typeof a) throw new Error('cat: a *must* be a string, was:'+a)
+    if('string' !== typeof b) throw new Error('cat: b *must* be a string, was:'+b)
     return a+b
   },
   charCodeAt: function (string, i) {
