@@ -8,21 +8,22 @@ var check   = require('../check')
 var {unmap} = require('../util')
 var $ = require('../symbols')
 
-var scope = Object.freeze({
-  add: function (a, b) { return a + b },
-  and: function (a, b) { return a & b },
-  mul: function (a, b) { return a * b },
-  eq: function (a, b) { return a === b },
-  gt: function (a, b) { return a > b },
-  i32: {type: types.type, value: types.number}
-})
+var scope = require('../env')
+// var scope = Object.freeze({
+  // add: function (a, b) { return a + b },
+  // and: function (a, b) { return a & b },
+  // mul: function (a, b) { return a * b },
+  // eq: function (a, b) { return a === b },
+  // gt: function (a, b) { return a > b },
+  // i32: {type: types.type, value: types.number}
+// })
 
 var n = {type: types.number, value: null}, b = {type: types.boolean, value:null}
 var nnn = {type: types.typesig, args: [n, n], returns: n}
 var nnb = {type: types.typesig, args: [n, n], returns: b}
 var type_scope = Object.freeze({
   add: nnn, and: nnn, mul: nnn,
-  eq: nnb, gt: nnb,
+  eq: nnb, gt: nnb, gte:nnb,
   i32: {type: types.type, value: types.number}
 })
 

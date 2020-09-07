@@ -12,7 +12,8 @@ exports.inputs = [
   '{x; eq(and(x 1) 1) ? true ; false}(4)',
   '{;fac:{n; eq(n 1) ? 1 ; mul(n fac(add(-1 n)))}}()(1)',
   '{;fac:{n; eq(n 1) ? 1 ; mul(n fac(add(-1 n)))}}()(7)',
-  '{; sq:{x m; gt(x m) ? x ; sq(mul(x x) m)}}()(2 10000)',
+  '{; sq:{x m; gt (x m) ? x ; sq(mul(x x) m) }}()(2 10000)',
+  '{; sq:{x m; gte(m x) ? sq(mul(x x) m) ; x }}()(2 10000)',
   '{x y; {x:x y:y}}(3 4)',
   '7 {; 1 2 3}()',
   'x:10 y:20 add(x y)',
@@ -41,7 +42,7 @@ cyclic2.value.a.value.b.value.c = {type: types.object, value: cyclic2.value, cyc
 exports.outputs = [
   N(3), N(7), N(10),
   B(false), B(false), B(false), B(true), B(true), B(false),
-  N(1), N(1*2*3*4*5*6*7), N(65536),
+  N(1), N(1*2*3*4*5*6*7), N(65536), N(65536),
   O({x: N(3), y: N(4)}),
   N(3), N(30), N(7), N(123),
   //true,
@@ -56,6 +57,6 @@ cyclic_raw.self = cyclic_raw
 var cyclic2_raw = {a:{b:{c:null}}}
 cyclic2_raw.a.b.c = cyclic2_raw
 exports.output_values = [
-  3,7,10,false,false, false,true, true,false,1,1*2*3*4*5*6*7,65536,
+  3,7,10,false,false, false,true, true,false,1,1*2*3*4*5*6*7,65536,65536,
   {x:3,y:4},3,30,7,123,987,349783,true,true, cyclic_raw, cyclic2_raw, types.object
 ]

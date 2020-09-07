@@ -1,5 +1,6 @@
 var hand_parser = require('../handwritten/parse')()
 var acid_parser = require('../parse')()
+var assert = require('assert')
 var fs = require('fs')
 var path = require('path')
 var src = fs.readFileSync(path.join(__dirname, '../parse.al'), 'utf8')
@@ -56,15 +57,19 @@ var inputs = [
   'a.[0]=1',
   src
 ]
-function tests (name, parser) {
-  console.log(name)
+function tests (parsers) {
   for(var i = 0; i < inputs.length; i++) {
     console.log("parse:", inputs[i])
-    console.log(inspect(parser(inputs[i]), {depth: Infinity, colors: true}))
+    var results = []
+    for(var k in parsers) {
+      var v = parsers[k](inputs[i])
+      console.log(inspect(v, {depth: Infinity, colors: true}))
+      results.push(v)
+    }
+//    assert.equal(inspect(results[1]), inspect(results[0]))
   }
 }
-tests('handwritten/parser', hand_parser)
-tests('compiled/parser', acid_parser)
+tests({hand: hand_parser, acid: acid_parser})
 
 //a ? b : c
 
