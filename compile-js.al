@@ -16,6 +16,14 @@ map:{ary map;
   R(0)
 }
 
+map_i:{ary map;
+  len: ary.length _ary: createArray(len)
+
+  R: {i; gt(len i) ? {; _ary.[i] = map(ary.[i] i) R(add(1 i))}() ; _ary}
+  R(0)
+}
+
+
 get_vars:{node;
   acc: ""
   eachR:{ary; each(ary {acc e; R(e)} nil)}
@@ -38,12 +46,37 @@ get_vars:{node;
   eq(acc "") ? "" ; concat([acc "; "])
 }
 
-concat:{ary; eq(ary.length 0) ? ary.[0] ; each(ary cat "")}
+concat:{ary; eq(ary.length 0) ? ary.[0] ; each(ary {a b; cat(a b)} "")}
+
+isCall: {node name;
+  neq(nil name) & eq(node.type $call) & eq(node.value.type $variable) & eq(node.value.value name.value)
+}
 
 compile:{node insert;
   args:{ary; join(map(ary C) ", ") }
+  
+  compile_recursive: {fn name;
+    c_r: {test not fn update result;
+      concat([
+        "(" args(fn.args) ") => {"
+        "\"TODO: this _t vars need to be globally unique\";\n"
+        "var " join(map_i(fn.args {v i; concat(["_t" stringify(i)])}) ", ") ";\n"
+        "while(" not ? "!" ; "" C(fn.body.left) ") {\n"
+        concat(map_i(update.args {v i; concat(["_t" stringify(i) " = " C(v) "; "]) }))
+        concat(map_i(update.args {v i; concat([C(fn.args.[i]) " = _t" stringify(i) "; "]) }))
+        "} return " C(result) "\n}"
+      ])
+    }
+    neq(fn.body.type $if) ? nil ;
+    isCall(fn.body.mid name)   ? c_r(fn.body.left false fn fn.body.mid   fn.body.right) ;
+    isCall(fn.body.right name) ? c_r(fn.body.left true  fn fn.body.right fn.body.mid) ;
+    nil
+  }
+
   compile_fun: {node name; 
     vars: get_vars(node.body)
+    s: compile_recursive(node name)
+    neq(s nil) ? s ;
     concat(
       eq(name nil)
       ? ["(" args(node.args) ") => "
@@ -84,15 +117,18 @@ compile:{node insert;
                                eq(node.right nil) ? "" ; concat(["=" C(node.right)])
                           ")" ] ;
       eq(type $call)    ? [
-          {; eq(node.value.type $variable) & neq(insert(node.value) nil) }()
-                                   ? insert(node.value map(node.args C)) ;
-          eq(node.value.type $fun) ? concat(["(" C(node.value) ")"]) ;
-                                     C(node.value)
-          
-          "(" args(node.args) ")"] ;
+          {; eq(node.value.type $variable) & neq(insert(node.value.value nil) nil) }()
+                                   ? {;
+                       s: insert(node.value.value map(node.args C)) 
+                       print(["INSERT" node.value node.args s])
+                       s
+                       }();
+          concat([eq(node.value.type $fun) ? concat(["(" C(node.value) ")"]) ; C(node.value)
+            "(" args(node.args) ")"
+          ])] ;
       eq(type $fun)     ? [ compile_fun(node nil) ] ;
       eq(type $array)   ? ["[" args(node.value) "]"] ;
-      eq(type $block)   ? ["(" args(node.body) ")"] ;
+      eq(type $block)   ? ["(" join(map(node.body C) ",\n") ")"] ;
       eq(type $object)  ? ["{"
         object_each(node.value {s k v; concat([s {; eq(s "") ? "" ; ", " }() stringify(k) ": " C(v)])} "")
                            "}"] ;
