@@ -6,16 +6,14 @@ var compile_src = fs.readFileSync(path.join(__dirname, '../compile-js.al'), 'utf
 var parse = require('../handwritten/parse')()
 //var parse = require('../parse')()
 var ast = parse(compile_src)
-console.log("AST", ast)
-var hand_compile = require('../handwritten/compile-js')
-//compiled via handwritten
-var compiled_compile = require('../compile-js')
 var $ = require('../symbols')
 var data = require('./data/expressions')
 var types = require('../types')
 var {mapValue} = require('../util')
 
 var scope = require('../env')
+
+
 var ev = require('../eval')
 
 function ev_js(src, scope) {
@@ -48,39 +46,34 @@ function test(name, compiler) {
     assert.deepEqual(v, data.output_values[i])
   })
 
-  var start = Date.now()
-  var dst = compiler(ast, nop)
-  console.log('self-compile time:', Date.now()-start)
   console.log()
-  return dst
 }
-var src2 = test('hand_js', hand_compile)
-var src3 = test('hand_js(acid)', ev_js(src2, scope))
-var src4 = test('hand_js(id)(acid)', ev_js(src3, scope))
+test('hand_js', require('../handwritten/compile-js'))
+test('hand_js(acid)', require('../bootstrap/compile-js'))
+test('hand_js(id)(acid)', require('../dist/compile-js'))
 //self compiled self hosted compiler should equal self compiled self self hosted compiler
-assert.equal(src4, src3)
 
-var ev_compile_fun = ev(ast, {__proto__: scope})
+// var ev_compile_fun = ev(ast, {__proto__: scope})
 
-function ev_compile (ast) {
-  ast =  mapValue(ast)
-  var src = ev({
-    type: types.call,
-    value: {type: types.variable, value: $('compile')},
-    args: [ast, {type: types.variable, value: $('nop')}]
-  }, {
-    __proto__: scope,
-    compile: ev_compile_fun,
-    nop: nop
-  }).value
-  return src
-}
+// function ev_compile (ast) {
+  // ast =  mapValue(ast)
+  // var src = ev({
+    // type: types.call,
+    // value: {type: types.variable, value: $('compile')},
+    // args: [ast, {type: types.variable, value: $('nop')}]
+  // }, {
+    // __proto__: scope,
+    // compile: ev_compile_fun,
+    // nop: nop
+  // }).value
+  // return src
+// }
 
-var src5 = test('eval', ev_compile)
-//assert that interpreted compiler also matches the self hosted output
-assert.equal(src5, src3)
+// var src5 = test('eval', ev_compile)
+// //assert that interpreted compiler also matches the self hosted output
+// assert.equal(src5, src3)
 
-var src2 = test('js', compiled_compile)
+// var src2 = test('js', compiled_compile)
 // var src3 = test('js(acid)', ev_js(src2, scope))
 // var src4 = test('js(acid)(acid)', ev_js(src3, scope))
 // assert.equal(src4, src3)

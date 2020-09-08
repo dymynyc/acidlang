@@ -1,5 +1,6 @@
 var hand_parser = require('../handwritten/parse')()
-var acid_parser = require('../parse')()
+var boot_parser = require('../bootstrap/parse')()
+var acid_parser = require('../dist/parse')()
 var assert = require('assert')
 var fs = require('fs')
 var path = require('path')
@@ -69,7 +70,7 @@ function tests (parsers) {
 //    assert.equal(inspect(results[1]), inspect(results[0]))
   }
 }
-tests({hand: hand_parser, acid: acid_parser})
+tests({hand: hand_parser, boot: boot_parser, acid: acid_parser})
 
 //a ? b : c
 
