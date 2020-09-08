@@ -8,14 +8,15 @@
     "url": "git://github.com/dymynyc/acidlang.git"
   },
   "dependencies": {
-    "stack-expression": "3"
+    "mkdirp": "^1.0.4",
+    "stack-expression": "3.0.1"
   },
   "devDependencies": {
     "tape": "^5.0.1"
   },
   "scripts": {
-    "build": "./bin.js build *.al",
-    "test": "./bin.js build *.al && tape test/*.*"
+    "build": "./bootstrap.sh",
+    "test": "./bootstrap.sh && tape test/*.*"
   },
   "bin": "./bin.js",
   "author": "@EMovhfIrFk4NihAKnRNhrfRaqIhBv1Wj8pTxJNgvCCY=.ed25519",
