@@ -188,9 +188,8 @@ function ev (node, scope, allow_cyclic) {
     if(left.type === types.object) {
       if(!left.value[key.value.description])
         throw new Error('object did not have property:'+node.mid.value.description)
-      if(!node.right) return left.value[key.value.description]
-      else            return left.value[key.value.description] = ev(node.right, scope)    
-
+      return !node.right ? left.value[key.value.description]
+                         : left.value[key.value.description] = ev(node.right, scope)
     }
     else if(left.type === types.array) {
       if(key.type === types.number && (key.value > left.value.length || key.value < 0)) {
@@ -203,14 +202,12 @@ function ev (node, scope, allow_cyclic) {
             throw new Error("cannot assign to array length")
           return {type: types.number, value: left.value.length}
         }
-      if(!node.right) return left.value[key.value]
-      else            return left.value[key.value] = ev(node.right, scope)    
+
+      return !node.right ? left.value[key.value]
+                         : left.value[key.value] = ev(node.right, scope)
     }
     else
       throw new Error('cannot access property:'+inspect(key) + ' of '+inspect(left))
-
-    if(!node.right) return left.value[key.value.description]
-    else            return left.value[key.value.description] = ev(node.right, scope)    
   }
 
   if(node.type === types.fun)
