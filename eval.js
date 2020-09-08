@@ -12,6 +12,7 @@ function isPrimitive (node) {
 }
 
 function bind (fn, scope, name) {
+  //check that argument vars are not duplicate
   for(var i = 0; i < fn.args.length;i++)
     for(var j = i+1; j < fn.args.length;j++)
       if(fn.args[i].value == fn.args[j].value)
@@ -163,7 +164,7 @@ function ev (node, scope, allow_cyclic) {
       return scope.set(name, value)
     }
   }
-
+  //TODO: error if attempt to update an argument.
   if(node.type === types.set) {
     var name = node.left.value
     //handle function defs specially, to enable recursion
