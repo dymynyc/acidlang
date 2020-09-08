@@ -1,7 +1,9 @@
 var fs = require('fs')
 var path = require('path')
+var mkdirp = require('mkdirp')
 var env = require('./env')
 var {inspect} = require('util')
+
 var resolve = require('./resolve')('node_modules', '.al', JSON.parse, "package.json")
 
 function toRelative(s) {
@@ -12,12 +14,12 @@ module.exports = function (parse, compile) {
   return function (entry, context, output) {
     var sources = {}
     function build(module, from) {
-      console.log("BUILD", module, from)
       var used = {}
       var target = resolve(module, from)
       if('.js'  === path.extname(target)) return 'require('+JSON.stringify(module)+')'
       var rel = path.relative(context, target)
       var outfile = path.join(output, path.relative(context, rel.substring(0, rel.length - path.extname(rel).length) + '.js'))
+      mkdirp.sync(path.dirname(outfile))
       var relfrom = path.relative(context, from) //where the parent module will end up
       var outfrom = path.join(output, relfrom)
       var outrel = rel.substring(0, rel.length - path.extname(rel).length) + '.js'
@@ -55,7 +57,6 @@ module.exports = function (parse, compile) {
         builtins += 'var '+k+' = '+env[k].toString()+';\n'
 
       fs.writeFileSync(outfile, builtins + 'module.exports = ' + out)
-      console.error("output:", outfile) 
       return 'require('+JSON.stringify(outfile)+')'
     }
 

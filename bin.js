@@ -32,7 +32,6 @@ function run (entry, context) {
 
 if(~module.parent) {
   var cmd = process.argv[2]
-  console.error(process.argv.slice(2), process.env.output)
   if(cmd === 'run')
     run(process.argv[3], process.cwd())
   else if(cmd === 'bootstrap' || cmd === 'bootstrap1')
