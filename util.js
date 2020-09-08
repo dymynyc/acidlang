@@ -1,5 +1,6 @@
 var types = require('./types')
 var inspect = require('util').inspect
+var ev = require('./eval')
 
 function isPrimitive (node) {
   return (
@@ -30,6 +31,11 @@ function unmapValue(v) {
     return v.value
   else if('function' === typeof v)
     return v
+  else if(v.type === types.fun)
+    return function () {
+      var args = [].map.call(arguments, mapValue)
+      return unmapValue(ev({type: types.call, value: v, args: args}, v.scope))
+    }
   else
     throw new Error('cannot unmap node:'+inspect(v))
   
@@ -49,8 +55,9 @@ function mapValue (ast) {
   if(Array.isArray(ast))
     return {type: types.array, value: ast.map(mapValue)}
   //must be object...
-  if('function' === typeof ast)
-      return ast
+  if('function' === typeof ast) {
+      return wrap(ast)
+  }
   var obj = {}
   for(var k in ast)
     obj[k] = mapValue(ast[k])
@@ -71,4 +78,11 @@ function bind (fn, scope, name) {
   }
 }
 
-module.exports = {unmapValue, mapValue, isPrimitive, bind}
+function wrap(fn) {
+  return 'function' === typeof fn ?
+    function () {
+      return mapValue(fn.apply(null, [].map.call(arguments, unmapValue)))
+    } : fn
+}
+
+module.exports = {unmapValue, mapValue, isPrimitive, bind, wrap}

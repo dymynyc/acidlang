@@ -4,6 +4,7 @@ var path = require('path')
 var env = require('./env')
 var parse = require('./handwritten/parse')()
 var ev = require('./eval')
+var HT = require('./hashtable')
 var {inspect} = require('util')
 var resolve = require('./resolve')('node_modules', '.al', JSON.parse, "package.json")
 var {wrap, mapValue, unmapValue} = require('./util')
@@ -16,24 +17,11 @@ function toRelative(s) {
   return './' + path.normalize('./'+ s)
 }
 
-function run (entry, context) {
-  function load(module, from) {
-    var target = resolve(module, from)
-    if('.js'  === path.extname(target)) return require(target)
-    var src = fs.readFileSync(target, 'utf8')
-    var ast = parse(src)
-    return ev(ast, {__proto__: env, import: function (req) {
-      return load(req, path.dirname(target))
-    }})
-  }
-  var exports = load(entry, context)
-  return exports
-}
 
 if(~module.parent) {
   var cmd = process.argv[2]
   if(cmd === 'run')
-    run(process.argv[3], process.cwd())
+    require('./run')(toRelative(process.argv[3]), process.cwd())
   else if(cmd === 'bootstrap' || cmd === 'bootstrap1')
     require('./build')
       (require('./handwritten/parse')(), require('./handwritten/compile-js'))

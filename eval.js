@@ -1,6 +1,30 @@
 var types = require('./types')
-var inspect = require('util').inspect
-var {isPrimitive, bind, mapValue, unmapValue} = require('./util')
+var HT = require('./hashtable')
+
+function isPrimitive (node) {
+  return (
+    node.type === types.number ||
+    node.type === types.string ||
+    node.type === types.boolean ||
+    node.type === types.nil ||
+    node.type === types.symbol
+  )
+}
+
+function bind (fn, scope, name) {
+  for(var i = 0; i < fn.args.length;i++)
+    for(var j = i+1; j < fn.args.length;j++)
+      if(fn.args[i].value == fn.args[j].value)
+        throw new Error('arg:'+fn.args[i].value.description+' was repeated')
+  return {
+    type: types.fun,
+    args: fn.args,
+    body: fn.body,
+    scope: scope,
+    name: name || null
+  }
+}
+
 //take a recursive expression and process it as a loop
 //this is much faster and also prevents stack overflows.
 //when we get to compliation we'll compile it like this too.
@@ -20,7 +44,7 @@ function ev_loop(fn, scope) {
   while(ev_ab(test, scope).value ^ not) {
     var values = update.map(e => ev(e, scope))
     for(var i = 0; i < fn.args.length; i++)
-      scope[fn.args[i].value.description] = values[i]
+      scope.set(fn.args[i].value, values[i])
   }
   return ev(terminal, scope)
 }
@@ -30,33 +54,23 @@ function calls (node, name) {
 }
 
 var True = {types: types.boolean, value: true}
-function toFunction (fun) {
-  return function () {
-    var args = [].slice.call(arguments).map(mapValue)
-    return unmapValue(call(fun, args))
-  }
-}
 
 function call (fn, args) {
   //eval with built in function
-  //if(!scope) throw new Error('call without scope')
   if(!fn) throw new Error('cannot call undefined')
   if('function' === typeof fn) {
-    //if(args.length !== fn.length)
-    //  throw new Error('incorrect number of arguments for:'+fn+', got:'+args)
-    var args = args.map(v => v.type === types.fun ? toFunction(v) : unmapValue(v))
-    return mapValue(fn.apply(null, args))
+    return fn.apply(null, args)
   }
   if(fn.type !== types.fun) throw new Error('cannot call non-function')
   
   if(args.length !== fn.args.length)
     throw new Error('incorrect number of arguments for:'+inspect(fn, {colors:true})+', got:'+args)
-  var _scope = {__proto__: fn.scope}
+  var _scope = HT(fn.scope)
   //TODO: check that name and args do not collide.
   if(fn.name)
-    _scope[fn.name.value.description] = fn 
+    _scope.set(fn.name.value, fn)
   for(var i = 0; i < fn.args.length; i++)
-    _scope[fn.args[i].value.description] = args[i]
+    _scope.set(fn.args[i].value, args[i])
   
 
   //optimization for special case of recursion
@@ -94,8 +108,8 @@ function ev (node, scope, allow_cyclic) {
   
   if(node.type === types.variable) {
     var name = node.value
-    if(!scope[name.description]) throw new Error('variable:'+name.description+' is not defined')
-    var value = scope[name.description]
+    if(!scope.has(name)) throw new Error('variable:'+name.description+' is not defined')
+    var value = scope.get(name)
     if(value.type === types.object && value.cyclic && !allow_cyclic)
       throw new Error('cyclic reference must not be used outside of object literal')
     return value
@@ -109,6 +123,9 @@ function ev (node, scope, allow_cyclic) {
     var fn = ev(node.value, scope)
     return call(fn, node.args.map(a => ev(a, scope)), scope)
   }
+  
+  if('function' === typeof node)
+    return node
 
   if(node.type === types.if)  return ev_if(node.left, node.mid, node.right, scope)
   if(node.type === types.and) return ev_if(node.left, node.right, False, scope)
@@ -131,37 +148,37 @@ function ev (node, scope, allow_cyclic) {
   if(node.type === types.def) {
     //handle function defs specially, to enable recursion
     var name = node.left.value
-    if(Object.hasOwnProperty.call(scope, name.description))
+    if(scope.hasOwn(name.description))
       throw new Error('variable already defined:'+name.descripton+', cannot redefine')
     if(node.right.type === types.fun)
-      return scope[name.description] = bind(node.right, scope, node.left)
+      return scope.set(name, bind(node.right, scope, node.left))
     else if(node.right.type === types.object) {
-      var _obj = scope[name.description] = {type: types.object, value: null, cyclic: true}
-      var obj = scope[name.description] = ev(node.right, scope, true)
+      var _obj = scope.set(name, {type: types.object, value: null, cyclic: true})
+      var obj = scope.set(name, ev(node.right, scope, true))
       _obj.value = obj.value
       return obj
     }
     else {
       var value = ev(node.right, scope)
-      return scope[name.description] = value
+      return scope.set(name, value)
     }
   }
 
   if(node.type === types.set) {
     var name = node.left.value
     //handle function defs specially, to enable recursion
-    if(!scope[name.description])
+    if(!scope.has(name))
       throw new Error('attempted to assign undefined value')
     var value = ev(node.right, scope)
-    if(scope[name.description].type !== value.type)
+    if(scope.get(name).type !== value.type)
         throw new Error('attempted to assign value of type:'+value.type.description+
           ', to variable:'+name.description+' of type:'+
-          scope[name.description].type.description)
+          scope.get(name).type.description)
     if(value.type === types.fun)
         throw new Error("cannot assign function type, must use : (define)")
           
-    scope[name.description].value = value.value
-    return scope[name.description]
+    scope.get(name).value = value.value
+    return scope.get(name)
   }
 
   if(node.type === types.access) {
