@@ -4,7 +4,7 @@ var ev      = require('../eval')
 var inspect = require('util').inspect
 var compile = require('../handwritten/compile-js')
 var types   = require('../types')
-//var check   = require('../check')
+var check   = require('../check')
 var {unmap, wrap} = require('../util')
 var $ = require('../symbols')
 var HT = require('../hashtable')
@@ -41,8 +41,8 @@ for(var i = 0; i < inputs.length; i++) {
     assert.deepEqual(v, outputs[i])
     
     //TEMP disable checker
-    if(false) {
-      var type = check(ast, {__proto__: type_scope})
+    if(true) {
+      var type = check(ast, HT(new Map(Object.entries(type_scope))))
       console.log("TYP", type)
       if(type.type === types.object) {
         assert.deepEqual(Object.keys(type.value), Object.keys(outputs[i].value))

@@ -2,6 +2,7 @@ var assert = require('assert')
 var parse = require('../handwritten/parse')()
 var ev = require('../eval')
 var check = require('../check')
+var HT = require('../hashtable')
 
 //inputs that parse correctly but incorrect types.
 
@@ -51,7 +52,7 @@ for(var i = 0; i < inputs.length; i++) {
   console.log('*************')
   console.log(src)
   try {
-  var v = ev(ast, {__proto__:scope})
+  var v = ev(ast, HT(new Map(Object.entries(scope))))
     failed = true
   } catch(err) {
     console.log('expected:', err.message)
@@ -61,7 +62,7 @@ for(var i = 0; i < inputs.length; i++) {
    throw new Error('expected eval to fail:'+src)
 
   try {
-    var v = check(ast, {__proto__:scope})
+    var v = check(ast, HT(new Map(Object.entries(scope))))
     failed = true
   } catch(err) {
     console.log('expected:', err.message)
