@@ -9,6 +9,7 @@ module.exports = function (parentMap) {
       k = toString(k)
       return map.has(k) ? true : parentMap != null ? parentMap.get(k) : false      
     },
+    //used to check if a value is already defined.
     hasOwn: function (k) {
       return map.has(toString(k))
     },
