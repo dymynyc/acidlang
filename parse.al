@@ -1,15 +1,16 @@
 s: import("stack-expression/index.js")
 
+
 And:s.And Or:s.Or Maybe:s.Maybe Many:s.Many
 More:s.More Join:s.Join Recurse:s.Recurse
 Group:s.Group Text:s.Text Expect:s.Expect
 EOF:s.EOF Empty:s.Empty Not:s.Not
 
+json: import("stack-expression/examples/json.js")
+
 _1: Or(" " "\t" "\n" "\r\n")
 __: More(_1)
 _:  Many(_1)
-
-json: import("stack-expression/examples/json.js")
 
 List:{val map; Group(Maybe(Join(val __)) map)}
 

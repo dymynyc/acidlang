@@ -2,27 +2,8 @@
 
 "todo: make these into a library..."
 "(no comments yet, but can put strings in a block)"
-
-each:{ary reduce init;
-  R: {acc i; gt(ary.length i) ? R(reduce(acc ary.[i]) add(1 i)) ; acc}
-  R(init 0)}
-
-join:{a str; each(a {acc item; eq(acc "") ? item ; concat([acc str item])} "")}
-
-map:{ary map;
-  len: ary.length _ary: createArray(len)
-
-  R: {i; gt(len i) ? {; _ary.[i] = map(ary.[i]) R(add(1 i))}() ; _ary}
-  R(0)
-}
-
-map_i:{ary map;
-  len: ary.length _ary: createArray(len)
-
-  R: {i; gt(len i) ? {; _ary.[i] = map(ary.[i] i) R(add(1 i))}() ; _ary}
-  R(0)
-}
-
+a: import("./arrays")
+each: a.each map: a.map map_i: a.map_i join: a.join concat: a.concat
 
 get_vars:{node;
   acc: ""
@@ -45,8 +26,6 @@ get_vars:{node;
   R(node)
   eq(acc "") ? "" ; concat([acc "; "])
 }
-
-concat:{ary; eq(ary.length 0) ? ary.[0] ; each(ary {a b; cat(a b)} "")}
 
 isCall: {node name;
   neq(nil name) & eq(node.type $call) & eq(node.value.type $variable) & eq(node.value.value name.value)
@@ -118,11 +97,7 @@ compile:{node insert;
                           ")" ] ;
       eq(type $call)    ? [
           {; eq(node.value.type $variable) & neq(insert(node.value.value nil) nil) }()
-                                   ? {;
-                       s: insert(node.value.value map(node.args C)) 
-                       print(["INSERT" node.value node.args s])
-                       s
-                       }();
+                                   ? insert(node.value.value map(node.args C));
           concat([eq(node.value.type $fun) ? concat(["(" C(node.value) ")"]) ; C(node.value)
             "(" args(node.args) ")"
           ])] ;
@@ -132,7 +107,7 @@ compile:{node insert;
       eq(type $object)  ? ["{"
         object_each(node.value {s k v; concat([s {; eq(s "") ? "" ; ", " }() stringify(k) ": " C(v)])} "")
                            "}"] ;
-      [ crash(node)]
+      [ crash(node) ]
     )}
     C(node)
 }
