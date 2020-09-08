@@ -73,10 +73,10 @@ function call (fn, args) {
       throw new Error('incorrect number of arguments')
     sig.returns = Unknown()
     if(fn.name)
-      _scope[fn.name.value.description] = fn
+      _scope.set(fn.name.value, fn)
     for(var i = 0; i < fn.args.length; i++) {
       var name = fn.args[i].value
-      _scope[name.description] = args[i]
+      _scope.set(name, args[i])
       //remember the type we are using
       sig.args[i].value = args[i].value
     }
@@ -98,11 +98,10 @@ function check (node, scope, allow_cyclic) {
   }
 
   if(node.type === types.variable) {
-    if(!scope[node.value.description])
+    if(!scope.has(node.value))
       throw new Error('variable:'+node.value.description+' is not defined')
-    var value = scope[node.value.description]
+    var value = scope.get(node.value)
     if(value.type === types.object && value.cyclic && !allow_cyclic) {
-      console.log('cyclic', value, allow_cyclic)
       throw new Error('cyclic reference:'+node.value.description+' must not be used outside of object literal')
     }
     return value
@@ -151,29 +150,28 @@ function check (node, scope, allow_cyclic) {
   }
   if(node.type === types.def) {
     var name = node.left.value
-    if(Object.hasOwnProperty.call(scope, name.description)) {
+    if(scope.hasOwn(name)) {
       throw new Error('variable already defined:'+name.description+', cannot redefine')
     }
     if(node.right.type === types.fun)
-      return scope[name.description] = bind(node.right, scope, node.left)
+      return scope.set(name, bind(node.right, scope, node.left))
     else if(node.right.type === types.object) {
-      var _obj = scope[name.description] = {type: types.object, value: null, cyclic: true}
-      var obj = check(node.right, scope, true)
+      var _obj = scope.set(name, {type: types.object, value: null, cyclic: true})
+      var obj = scope.set(name, check(node.right, scope, true))
       _obj.value = obj.value
-      scope[name.description] = obj
       return obj
     }
     else
-      return scope[name.description] = check(node.right, scope)
+      return scope.set(name, check(node.right, scope))
   }
  
   if(node.type === types.set) {
     var name = node.left.value
-    //handle function defs specially, to enable recursion
-    if(!scope[name.description])
+    if(!scope.has(name))
       throw new Error('attempted to assign undefined value')
-    var type = scope[name.description]
+    var type = scope.get(name)
     var _type = check(node.right, scope)
+    //does not do the assignment, because set cannot change types.
     if(type.value !== _type.value)
       throw new Error('variable already declared as type:'+type.value.description+ ', cannot reassign to type:'+_type.value.description)      
     return type
