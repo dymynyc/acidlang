@@ -1,5 +1,9 @@
 ## ast
 
+first swipe at defining how the ast works and it's behavior.
+`$` indicates a symbol. symbols are unique strings that my be compared by address.
+it can be considered like an enum with a global namespace.
+
 ### Number
 
 currently have only implemented 32 bit integers.
