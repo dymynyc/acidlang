@@ -1,7 +1,7 @@
 var fs = require('fs')
 var path = require('path')
 
-//this probably needs caching?
+//module resolution should be cached by the user of this module
 
 module.exports = function (MODULES, EXT, PARSE, PKG) {
   if(EXT[0] != '.')
