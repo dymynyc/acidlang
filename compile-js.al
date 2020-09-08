@@ -1,7 +1,5 @@
 "TODO: needs object support, then should be able to compile itself"
 
-"todo: make these into a library..."
-"(no comments yet, but can put strings in a block)"
 a: import("./arrays")
 each: a.each map: a.map map_i: a.map_i join: a.join concat: a.concat
 
