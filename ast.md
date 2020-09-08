@@ -2,6 +2,9 @@
 
 first swipe at defining how the ast works and it's behavior.
 `$` indicates a symbol. symbols are unique strings that my be compared by address.
+Also, since they are unique, the memory addresses can be used as keys for a hashtable,
+much faster than hashing their value.
+
 it can be considered like an enum with a global namespace.
 
 ### Number
