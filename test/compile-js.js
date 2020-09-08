@@ -10,7 +10,7 @@ var $ = require('../symbols')
 var data = require('./data/expressions')
 var types = require('../types')
 var {mapValue} = require('../util')
-
+var run = require('../run')
 var scope = require('../env')
 
 
@@ -37,6 +37,7 @@ console.log(ast)
 function test(name, compiler) {
   console.log("***************")
   console.log('test:', name)
+  var start = Date.now()
   data.inputs.forEach(function (v, i) {
     console.log('input :', v)
     var ast2 = parse(v) //'{a b; x:add(a b)}')
@@ -45,12 +46,14 @@ function test(name, compiler) {
     var v = ev_js(dst, scope)
     assert.deepEqual(v, data.output_values[i])
   })
-
+  //remove logging to get accurate times
+  console.log(Date.now() - start)
   console.log()
 }
 test('hand_js', require('../handwritten/compile-js'))
 test('hand_js(acid)', require('../bootstrap/compile-js'))
 test('hand_js(id)(acid)', require('../dist/compile-js'))
+
 //self compiled self hosted compiler should equal self compiled self self hosted compiler
 
 // var ev_compile_fun = ev(ast, {__proto__: scope})
@@ -77,3 +80,6 @@ test('hand_js(id)(acid)', require('../dist/compile-js'))
 // var src3 = test('js(acid)', ev_js(src2, scope))
 // var src4 = test('js(acid)(acid)', ev_js(src3, scope))
 // assert.equal(src4, src3)
+
+var ev_compile = run('../compile-js', __dirname)
+test('ev', ev_compile)
