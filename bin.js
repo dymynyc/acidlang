@@ -9,7 +9,7 @@ var resolve = require('./resolve')('node_modules', '.al', JSON.parse, "package.j
 var {wrap, mapValue, unmapValue} = require('./util')
 
 //var compile = require('./handwritten/compile-js')
-var compile = require('./compile-js')
+//var compile = require('./compile-js')
 var $ = require('./symbols')
 
 function toRelative(s) {
@@ -30,64 +30,29 @@ function run (entry, context) {
   return exports
 }
 
-function build (entry, context) {
-       var sources = {}
-  //var args = process.argv.slice(2)
-  //var entry = args[0], output = args[1]
-  function build(module, from) {
-    var used = {}
-    var target = resolve(module, from)
-    if(sources[target]) return
-    sources[target] = true
-    if('.js'  === path.extname(target)) return 'require('+JSON.stringify(module)+')'
-    var src = fs.readFileSync(target, 'utf8')
-    var ast = parse(src)
-
-    var scope = {}
-    for(var k in env)
-      scope[k] = (function (k, fn) {
-        return function (...args) {
-          used[k] = true
-          return k + '(' + args.join(', ') + ')'
-        }
-      })(k, env[k])
-
-    var _scope = {
-      import: function (req) {
-        return build(JSON.parse(req), path.dirname(target))
-      },
-      print: function (x) {
-        return '(x=>(console.log(x),x))('+x+')'
-      },
-      __proto__: scope
-    }
-    var out = compile(ast, function (sym, args) {
-//      console.log("INSERT", sym, !!_scope[sym.description], args) 
-      if(!args) return !!_scope[sym.description] ? sym : null
-      return _scope[sym.description].apply(null, args)
-    })
-
-    var outfile = target.substring(0, target.length - path.extname(target).length) + '.js'
-    var prefix = $.toString()+';\n'
-    for(var k in used)
-      prefix += 'var '+k+' = '+env[k].toString()+';\n'
-
-    fs.writeFileSync(outfile, prefix + 'module.exports = ' + out)
-    return 'require('+JSON.stringify(outfile)+')'
-  }
-
-  if(Array.isArray(entry))
-    entry.forEach(entry => build(toRelative(entry), context))
-  else
-    build(toRelative(entry), context)
-}
-
 if(~module.parent) {
   var cmd = process.argv[2]
+  console.error(process.argv.slice(2), process.env.output)
   if(cmd === 'run')
     run(process.argv[3], process.cwd())
+  else if(cmd === 'bootstrap' || cmd === 'bootstrap1')
+    require('./build')
+      (require('./handwritten/parse')(), require('./handwritten/compile-js'))
+        (process.argv.slice(3), process.cwd(), process.env.output)
+  else if(cmd === 'bootstrap2')
+    require('./build')
+      (require('./handwritten/parse')(), require('./bootstrap/compile-js'))
+        (process.argv.slice(3), process.cwd(), process.env.output)
+  else if(cmd === 'bootstrap3')
+    require('./build')
+      (require('./handwritten/parse')(), require('./bootstrap2/compile-js'))
+        (process.argv.slice(3), process.cwd(), process.env.output)
   else if(cmd === 'build')
-    build(process.argv.slice(3), process.cwd())
+    require('./build')
+      (require('./handwritten/parse')(), require('./dist/compile-js'))
+        (process.argv.slice(3), process.cwd(), process.env.output)
   else if(cmd === 'parse')
-    console.log(inspect(parse(fs.readFileSync(process.argv[3], 'utf8')), {colors: true, depth: 100}))
+    console.log(inspect(parse(fs.readFileSync(process.argv[3], 'utf8')), {colors: true, depth: Infinity}))
+  else
+    throw new Error('unknown command:'+cmd)
 }
