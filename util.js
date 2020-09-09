@@ -29,16 +29,17 @@ function unmapValue(v) {
   }
   else if(isPrimitive(v) || types.type === v.type)
     return v.value
-  else if('function' === typeof v)
-    return v
+  else if('function' === typeof v) {
+    return v.original || v //unwrap
+  }
   else if(v.type === types.fun)
     return function () {
       var args = [].map.call(arguments, mapValue)
       return unmapValue(ev({type: types.call, value: v, args: args}, v.scope))
     }
-  else
+  else {
     throw new Error('cannot unmap node:'+inspect(v))
-  
+  }
 }
 //TODO: support cyclic
 function mapValue (ast) {
@@ -56,7 +57,7 @@ function mapValue (ast) {
     return {type: types.array, value: ast.map(mapValue)}
   //must be object...
   if('function' === typeof ast) {
-      return wrap(ast)
+    return wrap(ast)
   }
   var obj = {}
   for(var k in ast)
@@ -79,10 +80,12 @@ function bind (fn, scope, name) {
 }
 
 function wrap(fn) {
-  return 'function' === typeof fn ?
-    function () {
-      return mapValue(fn.apply(null, [].map.call(arguments, unmapValue)))
-    } : fn
+  if('function' !== typeof fn) return fn
+  function wrapped () {
+    return mapValue(fn.apply(null, [].map.call(arguments, unmapValue)))
+  }
+  wrapped.original = fn
+  return wrapped
 }
 
 module.exports = {unmapValue, mapValue, isPrimitive, bind, wrap}
