@@ -1,7 +1,10 @@
 var types = require('./types')
 var $ = require('./symbols')
+var inspect = require('util').inspect
 module.exports = Object.freeze({
-  stringify: function (x) { return 'symbol' === typeof x ? x.description : JSON.stringify(x) },
+  stringify: function (x) {
+    return 'symbol' === typeof x ? x.description : JSON.stringify(x)
+  },
   cat: function (a, b) {
     if('string' !== typeof a) throw new Error('cat: a *must* be a string, was:'+a)
     if('string' !== typeof b) throw new Error('cat: b *must* be a string, was:'+b)
@@ -32,7 +35,7 @@ module.exports = Object.freeze({
   lte: function (a, b) { return a <= b },
   i32: {type: types.type, value: types.number},
   print: function (s) {
-    console.log(s)
+    console.log(inspect(s, {colors: true, depth: Infinity}))
     return s
   },
   object_each: function object_each(obj, fn, acc) {
