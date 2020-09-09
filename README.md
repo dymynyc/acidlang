@@ -1,5 +1,7 @@
 # acidlang
 
+_acid removes rust_
+
 `acid` is a new _fun oriented_ programming language.
 
 goals:
