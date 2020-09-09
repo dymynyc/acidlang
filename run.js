@@ -14,7 +14,7 @@ for(var k in _env) env[k] = wrap(_env[k])
 module.exports = function run (entry, context) {
   function load(module, from) {
     var target = resolve(module, from)
-    if('.js'  === path.extname(target)) return require(target)
+    if('.js'  === path.extname(target)) return mapValue(require(target))
     var src = fs.readFileSync(target, 'utf8')
     var ast = parse(src)
     var scope = HT(new Map(Object.entries(env)))
