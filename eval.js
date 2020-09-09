@@ -1,5 +1,6 @@
 var types = require('./types')
 var HT = require('./hashtable')
+var inspect = require('util').inspect
 
 function isPrimitive (node) {
   return (
@@ -84,7 +85,7 @@ function call (fn, args) {
 
 function ev_ab(node, scope) {
   var v = ev(node, scope)
-  if(v.type !== types.boolean) throw new Error('expected boolean')
+  if(v.type !== types.boolean) throw new Error('expected boolean, was:'+inspect(v))
   return v
 }
 
@@ -169,7 +170,7 @@ function ev (node, scope, allow_cyclic) {
     var name = node.left.value
     //handle function defs specially, to enable recursion
     if(!scope.has(name))
-      throw new Error('attempted to assign undefined value')
+      throw new Error('attempted to assign undefined value:'+name.description)
     var value = ev(node.right, scope)
     if(scope.get(name).type !== value.type)
         throw new Error('attempted to assign value of type:'+value.type.description+
