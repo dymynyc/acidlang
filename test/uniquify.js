@@ -1,10 +1,8 @@
-var run = require('../run')
-var parse = require('../handwritten/parse')()
+var run     = require('../run')
+var parse   = require('../handwritten/parse')()
 var inspect = require('util').inspect
-var ast = parse('x: 1 y:{x; mul(x x) }')
 var ev      = require('../util').eval
-//var HT = require('../hashtable')
-var assert = require('assert')
+var assert  = require('assert')
 
 var fn = run('../uniquify.al', __dirname)
 
