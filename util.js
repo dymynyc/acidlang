@@ -96,4 +96,8 @@ function wrappedEval (ast) {
   return ev(ast, HT(new Map(Object.entries(_scope))))
 }
 
-module.exports = {unmapValue, mapValue, isPrimitive, bind, wrap, eval: wrappedEval}
+function print (x) {
+  console.log('string' === typeof x ? x : inspect(x, {colors: true, depth: Infinity}))
+}
+
+module.exports = {unmapValue, mapValue, isPrimitive, bind, wrap, eval: wrappedEval, print}
