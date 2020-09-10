@@ -20,4 +20,6 @@ map_i:{ary map;
 
 concat:{ary; eq(ary.length 0) ? ary.[0] ; each(ary {a b; cat(a b)} "")}
 
-{each:each join: join map: map map_i:map_i concat:concat}
+zip:{ary1 ary2 fun; map_i(ary1 {v i; fun(v ary2.[i])})}
+
+{each:each join: join map: map map_i:map_i concat:concat zip:zip}
