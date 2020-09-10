@@ -30,7 +30,9 @@ isCall: {node name;
 }
 
 compile:{node insert;
-  args:{ary; join(map(ary C) ", ") }
+  args:{ary;
+    join(map(ary C) ", ")
+  }
   
   compile_recursive: {fn name;
     c_r: {test not fn update result;
@@ -95,8 +97,8 @@ compile:{node insert;
                        eq(node.right nil) ? "" ; concat(["=" C(node.right)])
                     ")" ] ;
       c($call)    ? [
-                      {; eq(node.value.type $variable) & neq(insert(node.value.value nil) nil) }()
-                      ? insert(node.value.value map(node.args C));
+                      {;  eq(node.value.type $variable) & neq(insert(node.value.value nil) nil) }()
+                      ? insert(node.value.value map(node.args C)) ;
                       concat([
                         eq(node.value.type $fun) ? concat(["(" C(node.value) ")"]) ; C(node.value)
                         "(" args(node.args) ")"
