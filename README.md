@@ -8,6 +8,8 @@ goals:
 * self hosting
 * compiles to wasm
 * bootstrapped
+* expressive via closures
+* low level system programming language
 
 by simple I really do mean _simple_. 
 
