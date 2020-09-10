@@ -24,7 +24,8 @@ var type_scope = Object.freeze({
 })
 
 function ev_js(src, scope) {
-  with(scope) { return eval(src) }
+  var Map
+  with(scope) { return eval('(function () {'+src+'}())') }
 }
 
 var {inputs,outputs,output_values} = require('./data/expressions')
@@ -34,7 +35,7 @@ for(var i = 0; i < inputs.length; i++) {
     console.log('**********************')
     console.log("SRC", inputs[i])
     var ast = parse(inputs[i])
-//    console.log(inspect(ast, {colors:true, depth: 100}))
+    console.log(inspect(ast, {colors:true, depth: 100}))
     console.log("JS ", compile(ast))
     var v = ev(ast, HT(new Map(Object.entries(scope))))
     console.log("VAL", v)
