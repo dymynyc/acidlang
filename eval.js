@@ -188,7 +188,7 @@ function ev (node, scope, allow_cyclic) {
     var key = node.static ? node.mid : ev(node.mid, scope)
     if(left.type === types.object) {
       if(!left.value[key.value.description])
-        throw new Error('object did not have property:'+node.mid.value.description)
+        throw new Error('object did not have property:'+node.mid.value.description+', on:'+inspect(left))
       return !node.right ? left.value[key.value.description]
                          : left.value[key.value.description] = ev(node.right, scope)
     }
