@@ -1,6 +1,7 @@
 var types = require('./types')
 var inspect = require('util').inspect
 var ev = require('./eval')
+var HT = require('./hashtable')
 
 function isPrimitive (node) {
   return (
@@ -87,5 +88,12 @@ function wrap(fn) {
   wrapped.original = fn
   return wrapped
 }
+var scope = require('./env')
 
-module.exports = {unmapValue, mapValue, isPrimitive, bind, wrap}
+function wrappedEval (ast) {
+  var _scope = {}
+  for(var k in scope) _scope[k] = wrap(scope[k])
+  return ev(ast, HT(new Map(Object.entries(_scope))))
+}
+
+module.exports = {unmapValue, mapValue, isPrimitive, bind, wrap, eval: wrappedEval}
