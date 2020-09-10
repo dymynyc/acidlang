@@ -223,7 +223,7 @@ function ev (node, scope, allow_cyclic) {
           is(left.value[k], right.value[k])
       }
       else if(left.type !== right.value)
-      throw new Error('type assertion failed')
+        throw new Error('type assertion failed')
     })(left, right)
     return True
   }
