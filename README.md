@@ -1,6 +1,4 @@
-# acidlang
-
-_acid removes rust_
+# acidlang - _acid eats rust_
 
 `acid` is a new _fun oriented_ programming language.
 
