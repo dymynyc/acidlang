@@ -6,8 +6,8 @@ module.exports = Object.freeze({
     return 'symbol' === typeof x ? x.description : JSON.stringify(x)
   },
   cat: function (a, b) {
-    if('string' !== typeof a) throw new Error('cat: a *must* be a string, was:'+a)
-    if('string' !== typeof b) throw new Error('cat: b *must* be a string, was:'+b)
+    if('string' !== typeof a) throw new Error('cat: a *must* be a string, was:'+inspect(a))
+    if('string' !== typeof b) throw new Error('cat: b *must* be a string, was:'+inspect(b))
     return a+b
   },
   charCodeAt: function (string, i) {
@@ -25,6 +25,7 @@ module.exports = Object.freeze({
     // return object[key] != undefined
   // },
   add: function (a, b) { return a + b },
+  sub: function (a, b) { return a - b },
   and: function (a, b) { return a & b },
   mul: function (a, b) { return a * b },
   eq:  function (a, b) { return a === b },
