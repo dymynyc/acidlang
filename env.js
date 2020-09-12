@@ -45,6 +45,12 @@ module.exports = Object.freeze({
     }
     return acc
   },
+  create_object: function (kvs) {
+    var obj = {}
+    for(var i = 0; i < kvs.length; i++)
+      obj[kvs[i].key.value.description] = kvs[i].value
+    return obj
+  },
   crash: function (message) {
     throw new Error(message)
   },
