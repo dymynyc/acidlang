@@ -2,8 +2,18 @@ var {And,Or,Maybe,Many,More,Join,Recurse,Group,Text,Expect,EOF,Empty,Not}  = req
 var $ = require('../symbols')
 var types = require('../types')
 
-var __ = /^\s+/ //mandatory whitespace
-var _  = /^\s*/ //optional whitespace
+function Not1 (rule) {
+  rule = And(rule)
+  return function (input, start) {
+    return ~rule(input, start) ? -1 : 1
+  }
+}
+
+var comment = And("//", Many(Not1("\n")), Or("\n", EOF))
+var multicomment = And("/*", Many(Not1("*/")), Or("*/", EOF))
+var _1 = Or(" ", "\t", "\n", "\r\n", comment, multicomment)
+var __ = More(_1) //mandatory whitespace
+var _  = Many(_1) //optional whitespace
 
 //note: json's string and number already captures.
 var json = require('stack-expression/examples/json')

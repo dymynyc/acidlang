@@ -1,6 +1,5 @@
 s: import("stack-expression/index.js")
 
-
 And:s.And Or:s.Or Maybe:s.Maybe Many:s.Many
 More:s.More Join:s.Join Recurse:s.Recurse
 Group:s.Group Text:s.Text Expect:s.Expect
@@ -8,6 +7,10 @@ EOF:s.EOF Empty:s.Empty Not:s.Not
 
 json: import("stack-expression/examples/json.js")
 
+Any: {;{input start end group; 1}}
+
+comment: And("//" Many(And(Not("\n") Any())) Or("\n" EOF))
+multicomment: And("/*" Many(And(Not("*/") Any())) Or("*/" EOF))
 _1: Or(" " "\t" "\n" "\r\n")
 __: More(_1)
 _:  Many(_1)
@@ -32,6 +35,7 @@ Map: {rule mapper type;
     
 toBlock: {body; eq(body nil) ? nil ; gt(body.length 1) ? {type: $block body: body} ; body.[0]}
 Wrap: {rule type; Map(rule {value; {type: type value: value}})}
+WrapInfix: {rule type; Map(rule {value; {type: type left: null right: value}})}
 
 Range: {lo hi;
   lc: charCodeAt(lo 0) hc: charCodeAt(hi 0)
@@ -72,7 +76,7 @@ args: List(variable)
     ))
       
     key_value: Group(And(variable _ ":" _ Expect(value)) {kv; {key: kv.[0] value: kv.[1]}})
-    object: OpenClose("{" key_value "}" {pairs; {type: $object value: pairs}})
+    object: OpenClose("{" key_value "}" {pairs; {type: $object value: create_object(pairs)}})
     array: OpenClose("[" value "]" {items; {type: $array value: items}})
     fun: Group(And("{" _ args _ ";" _ List(value toBlock) _ "}") {fun;
       {type: $fun args: fun.[0] body: fun.[1] scope: nil name: nil}
@@ -80,7 +84,8 @@ args: List(variable)
     ternary: Group(And("?" _ expected_value _ Expect(";") _ expected_value) {parts;
       {type: $if left: nil mid: parts.[0] right: parts.[1]}
     })
-    Infix: {rule type; And(rule _  Wrap(expected_value type))}
+
+    Infix: {rule type; And(rule _  WrapInfix(expected_value type))}
     
     infixes: Or(
       Infix("&" $and) Infix("|" $or) Infix("=" $set) Infix(":" $def) Infix("@" $is)
