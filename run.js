@@ -1,7 +1,13 @@
 var fs = require('fs')
 var path = require('path')
 var env = require('./env')
-var parse = require('./handwritten/parse')()
+var parse
+try {
+  //use acid parser, if it has been built.
+  parse = require('./dist/parse')
+} catch (_) {
+  parse = require('./handwritten/parse')
+}
 var ev = require('./eval')
 var HT = require('./hashtable')
 var resolve = require('./resolve')('node_modules', '.al', JSON.parse, "package.json")
@@ -16,7 +22,7 @@ module.exports = function run (entry, context) {
     var target = resolve(module, from)
     if('.js'  === path.extname(target)) return mapValue(require(target))
     var src = fs.readFileSync(target, 'utf8')
-    var ast = parse(src)
+    var ast = parse()(src)
     var scope = HT(new Map(Object.entries(env)))
     scope.set('import', req => load(unmapValue(req), path.dirname(target)))
     var v = ev(ast, scope)

@@ -2,7 +2,13 @@
 var fs = require('fs')
 var path = require('path')
 var env = require('./env')
-var parse = require('./handwritten/parse')()
+var parse
+try {
+  //use acid parser, if it has been built.
+  parse = require('./dist/parse')
+} catch (_) {
+  parse = require('./handwritten/parse')
+}
 var ev = require('./eval')
 var HT = require('./hashtable')
 var {inspect} = require('util')
@@ -24,19 +30,19 @@ if(~module.parent) {
     require('./run')(toRelative(process.argv[3]), process.cwd())
   else if(cmd === 'bootstrap' || cmd === 'bootstrap1')
     require('./build')
-      (require('./handwritten/parse')(), require('./handwritten/compile-js'))
+      (parse(), require('./handwritten/compile-js'))
         (process.argv.slice(3), process.cwd(), process.env.output)
   else if(cmd === 'bootstrap2')
     require('./build')
-      (require('./handwritten/parse')(), require('./bootstrap/compile-js'))
+      (parse(), require('./bootstrap/compile-js'))
         (process.argv.slice(3), process.cwd(), process.env.output)
   else if(cmd === 'bootstrap3')
     require('./build')
-      (require('./handwritten/parse')(), require('./bootstrap2/compile-js'))
+      (parse(), require('./bootstrap2/compile-js'))
         (process.argv.slice(3), process.cwd(), process.env.output)
   else if(cmd === 'build')
     require('./build')
-      (require('./handwritten/parse')(), require('./dist/compile-js'))
+      (parse(), require('./dist/compile-js'))
         (process.argv.slice(3), process.cwd(), process.env.output)
   else if(cmd === 'parse')
     console.log(inspect(parse(fs.readFileSync(process.argv[3], 'utf8')), {colors: true, depth: Infinity}))
