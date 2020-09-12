@@ -56,6 +56,9 @@ var inputs = [
   'a ? b ? c ; d ; e',
   'a.[1]',
   'a.[0]=1',
+  'x:1 //foo\n y:2',
+  'x:1 /*foo\n */ y:2',
+  'x:1 /*foo\n',
   src
 ]
 function tests (parsers) {
@@ -66,11 +69,16 @@ function tests (parsers) {
       var v = parsers[k](inputs[i])
       console.log(inspect(v, {depth: Infinity, colors: true}))
       results.push(v)
+       if(results.length)
+        assert.equal(inspect(v), inspect(results[0]))
     }
-//    assert.equal(inspect(results[1]), inspect(results[0]))
   }
 }
-tests({hand: hand_parser, boot: boot_parser, acid: acid_parser})
+tests({
+  hand: hand_parser,
+  boot: boot_parser,
+  acid: acid_parser
+})
 
 //a ? b : c
 
