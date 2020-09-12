@@ -7,11 +7,11 @@ EOF:s.EOF Empty:s.Empty Not:s.Not
 
 json: import("stack-expression/examples/json.js")
 
-Any: {;{input start end group; 1}}
+any: {input start end group; 1}
 
-comment: And("//" Many(And(Not("\n") Any())) Or("\n" EOF))
-multicomment: And("/*" Many(And(Not("*/") Any())) Or("*/" EOF))
-_1: Or(" " "\t" "\n" "\r\n")
+comment: And("//" Many(And(Not("\n") any)) Or("\n" EOF))
+multicomment: And("/*" Many(And(Not("*/") any)) Or("*/" EOF))
+_1: Or(" " "\t" "\n" "\r\n" comment multicomment)
 __: More(_1)
 _:  Many(_1)
 
