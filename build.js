@@ -16,14 +16,14 @@ module.exports = function (parse, compile) {
     function build(module, from) {
       var used = {}
       var target = resolve(module, from)
-      if('.js'  === path.extname(target)) return 'require('+JSON.stringify(module)+')'
+      if('.js'  === path.extname(target)) return 'require('+JSON.stringify(module)+')/*direct js*/'
       var rel = path.relative(context, target)
       var outfile = path.join(output, path.relative(context, rel.substring(0, rel.length - path.extname(rel).length) + '.js'))
       mkdirp.sync(path.dirname(outfile))
       var relfrom = path.relative(context, from) //where the parent module will end up
       var outfrom = path.join(output, relfrom)
       var outrel = rel.substring(0, rel.length - path.extname(rel).length) + '.js'
-      if(sources[target]) return 'require('+JSON.stringify(toRelative(outrel))+')'
+      if(sources[target]) return 'require('+JSON.stringify(toRelative(outrel))+')/*compiled al*/'
       sources[target] = true
 
       var scope = {}
@@ -57,7 +57,7 @@ module.exports = function (parse, compile) {
         builtins += 'var '+k+' = '+env[k].toString()+';\n'
 
       fs.writeFileSync(outfile, builtins + 'module.exports = ' + out)
-      return 'require('+JSON.stringify(outfile)+')'
+      return 'require('+JSON.stringify(toRelative(outrel))+')/*compiled*/'
     }
 
     if(Array.isArray(entry))
