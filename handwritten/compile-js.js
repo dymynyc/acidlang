@@ -50,13 +50,14 @@ function compile(node, insert) {
     if(type === types.nil)
       return 'null'
     if(type === types.if)
-      return C(node.left) + ' ? ' + C(node.mid) + ' : ' +
-        (types.if === node.right.type ? '\n  ' : '') + C(node.right, node)
+      return '(' + C(node.left) + ' ? ' + C(node.mid) + ' : ' +
+        (types.if === node.right.type ? '\n  ' : '') + C(node.right, node) + ')'
     if(type === types.and)
       return '(' + C(node.left) + ' ? ' + C(node.right) + ' : false)'
     if(type === types.or)
       return '(' + C(node.left) + ' ? true : ' + C(node.right) + ')' 
     if(type === types.fun) {
+      if(node.body == null) return '()=>null'
       var vars = get_vars(node.body)
       return '(' + args(node.args).trim() + ') => ' + 
         (node.body.type === types.block ? "{\n"+C(node.body)+'\n}' : C(node.body))

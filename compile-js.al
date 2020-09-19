@@ -1,6 +1,7 @@
 a: import("./arrays")
 each: a.each map: a.map map_i: a.map_i join: a.join concat: a.concat
 
+//inline get_vars, inline eachR into R, then roll out R.
 get_vars:{node;
   acc: ""
   eachR:{ary; each(ary {acc e; R(e)} nil)}
@@ -52,20 +53,22 @@ compile:{node insert;
     nil
   }
 
-  compile_fun: {node name; 
-    vars: get_vars(node.body)
-    s: compile_recursive(node name)
-    neq(s nil) ? s ;
-    concat(
-      eq(name nil)
-      ? ["(" args(node.args) ") => "
-          concat(eq(vars "")
-          ? ["(" C(node.body) ")"]
-          ; ["{" vars "return " C(node.body) "}"])
-        ]
-      ; ["(function " C(name) " (" args(node.args) ") {"
-          vars "return " C(node.body) "})"]
-    )
+  compile_fun: {node name;
+    eq(nil node.body) ? "(()=>null)" ; {;
+      vars: get_vars(node.body)
+      s: compile_recursive(node name)
+      neq(s nil) ? s ;
+      concat(
+        eq(name nil)
+        ? ["(" args(node.args) ") => "
+            concat(eq(vars "")
+            ? ["(" eq(nil node.body) ? "null" ; C(node.body) ")"]
+            ; ["{" vars "return " eq(nil node.body) ? "null" ; C(node.body) "}"])
+          ]
+        ; ["(function " C(name) " (" args(node.args) ") {"
+            vars "return " eq(nil node.body) ? "null" ; C(node.body) "})"]
+      )
+    }()
   }
   C: {node;
     type:node.type
@@ -78,7 +81,7 @@ compile:{node insert;
       c($symbol)  ? ["$(" stringify(stringify(node.value)) ")"] ;
       c($nil)     ? ["null"] ;
       c($is)      ? ["true"] ;
-      {; c($def) | c($set)}()
+      {; c($def) | c($set) }()
                   ? ["(" stringify(node.left.value) " = "
                       eq(node.right.type $fun) ? compile_fun(node.right node.left) ;
                       eq(node.right.type $object) ? concat([object_each(node.right.value {s k v;

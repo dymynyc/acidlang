@@ -33,7 +33,11 @@ Map: {rule mapper type;
   {input start end group;
     rule(input start end {v; group(mapper(v))}) } }
     
-toBlock: {body; eq(body nil) ? nil ; gt(body.length 1) ? {type: $block body: body} ; body.[0]}
+toBlock: {body;
+  eq(body.length 0) ? nil ;
+  gt(body.length 1) ? {type: $block body: body} ;
+                      body.[0]
+}
 Wrap: {rule type; Map(rule {value; {type: type value: value}})}
 WrapInfix: {rule type; Map(rule {value; {type: type left: null right: value}})}
 
@@ -75,11 +79,17 @@ args: List(variable)
         {type: $access left: nil mid: args.[0] right: eq(args.length 2) ? args.[1] ; nil static: false}})
     ))
       
-    key_value: Group(And(variable _ ":" _ Expect(value)) {kv; {key: kv.[0] value: kv.[1]}})
+    key_value: Group(And(variable _ ":" _ Expect(value)) {kv; {key: kv.[0].value value: kv.[1]}})
     object: OpenClose("{" key_value "}" {pairs; {type: $object value: create_object(pairs)}})
     array: OpenClose("[" value "]" {items; {type: $array value: items}})
     fun: Group(And("{" _ args _ ";" _ List(value toBlock) _ "}") {fun;
-      {type: $fun args: fun.[0] body: fun.[1] scope: nil name: nil}
+      {
+        type: $fun
+        args: fun.[0]
+        body: gt(fun.length 0) ? fun.[1] ; nil_node
+        scope: nil
+        name: nil
+      }
     })
     ternary: Group(And("?" _ expected_value _ Expect(";") _ expected_value) {parts;
       {type: $if left: nil mid: parts.[0] right: parts.[1]}
