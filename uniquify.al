@@ -3,13 +3,13 @@ a:  import("./arrays")
 each: a.each map: a.map
 n:  import("./nodes")
 
-transform: import("./copy").transform
+transform: import("./transform").transform
 
 {counter;
   counter@i32
   unique: {scope name; scope.set(name {
     type: $variable
-    value: createSymbol(cat(stringify(name) cat("_" stringify(counter = add(1 counter)))))
+    value: create_symbol(cat(stringify(name) cat("_" stringify(counter = add(1 counter)))))
   })}
   get: {scope name; neq(nil v:scope.get(name.value)) ? v ; name }
 

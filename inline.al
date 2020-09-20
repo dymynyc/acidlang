@@ -1,52 +1,110 @@
-HT: import("./hashtable.js")
-a: import("./arrays")
+HT:       import("./hashtable.js")
+a:        import("./arrays")
 map: a.map zip:a.zip
+uniquify: import("./uniquify")
+funs:     import("./functions")
+n:        import("./nodes")
 
-"if the inlined value is a block, set value to the last value note, that might also be a block."
-deblock: {def right scope;
-  eq(right.type $block) ? {;
-    right.body.[sub(right.body.length 1)] = deblock(def right.body.[sub(right.body.length 1)] scope)
-    right
-  }() ; {;
-    scope.set(def.left.value def.right = right)
-    def
-  }()
-}
-"TODO: make sure we can handle cases where a block resolves to a function"
-"branch that evals to functions will be more tricky"
-resolve: {node scope;
-  c:EQ(node.type)
-  c($variable) ? scope.get(node.value) ;
-  c($fun)      ? node ;
-                 crash("cannot resolve a function")
-}
-Block: {body; {type: $block body: body}}
-Call: {value args; {type: $call value: value args: args}}
-Def: {k v; {type: $def left: k right: v}}
+/*
+notes: I think this might come out cleaner if A) no mutations, such as in def.
+       B) add loop node, and transform loopables to that.
+       
+       note: the reason I went with recursive only, was to make constant eval
+       easier, because it meant we could avoid mutable vars.
+       inlining a recursive loop is easier. hmm, or could I transform the loop into
+       recursion when inlining constants?
+*/
 
 EQ: {x; {y; eq(x y) }}
-traverse: {node;
+last: {ary; ary.[sub(ary.length 1)]}
+set_last: {ary value; ary.[sub(ary.length 1)] = value}
+
+//if the inlined value is a block, set value to the last value note, that might also be a block.
+update: {node value scope;
+  c:EQ(node.type)
+  //XXX: mutations
+  c($def)   ? eq(value.type $fun) ? scope.set(node.left.value node.right = value) ; node.right = value ;
+  //XXX: mutations
+  c($call)  ? node.value = value ;
+  //XXX: mutations
+  c($set)   ? node.right = value ;
+             crash("unknown node")
+}
+
+deblock: {node right scope;
+  eq(right.type $block) ? {;
+    //XXX: mutations
+    set_last(right.body deblock(node last(right.body) scope))
+    right
+  }() ; {;
+    update(node right scope)
+    node
+  }()
+}
+
+{node;
   scope: HT(nil)
-  "note, because this transform is applied after uniquify, it's no longer necessary to track scopes"
+  unique: uniquify(0)
   T: {node;
     c: EQ(node.type)
-
-    c($def)   ? {;
-                  eq(node.right.type $fun)
-                  ? {;
-                      scope.set(node.left.value node.right)
-                      node
-                    }()
-                  ; deblock(node T(node.right) scope)
-                }() ;
-    c($call)  ? {;
-                  fn: resolve(node.value scope)
-                  eq(fn nil)
-                  ? Call(node.value map(node.args T))
-                  ; Block([Block(zip(fn.args node.args {k v; T(Def(k v)) })) T(fn.body)])
-                }() ;
-    c($block) ? Block(map(node.body T)) ;
-                node
+    c($variable)  ? {; 
+      neq(nil v:scope.get(node.value)) ? v ; node }();
+    c($def)       ? {;
+                      {; eq(node.right.type $fun) | eq(node.right.type $object) | eq(node.right.type $array) }()
+                      ? {;
+                          //NOTE: to handle loopable functions,
+                          //inline everything at define stage.
+                          //XXX: mutations
+                          scope.set(node.left.value node.right=T(node.right))
+                          node
+                        }()
+                      ; deblock(node T(node.right) scope)
+                    }() ;
+    
+    c($set)       ? deblock(node T(node.right) scope) ;
+    //XXX: mutations
+    c($object)    ? {; object_each(node.value {_ k v; node.value.[k] = T(v) }) node}() ;
+    c($array)     ? {type:$array value: map(node.value T)} ;
+    c($access)    ? {; 
+                      {; eq(nil node.right) & node.static }()
+                      ? {;
+                          //there are unhandled cases here!
+                          value:T(node.left)
+                          eq(value.type $object) ? value.value.[node.mid.value] ;
+                          n.Access(node.left T(node.mid) nil true)
+                        }()
+                      ; node
+                    }();
+    c($call)      ? {;
+                      value: T(node.value)
+                      c: EQ(value.type)
+                      c($variable)  ? n.Call(value map(node.args T)) ;
+                                      //note: uniquify when inlining a call
+                                      //in case the same function is inlined twice.
+                      c($fun)       ? 
+                                        {; eq(node.value.type $variable) &
+                                            funs.is_recursive(value node.value) }() ? node ;
+                                        eq(value.args.length 0) ? {;
+                                          unique(T(value.body))
+                                        }() ; {;
+                                        print(unique(n.Block([
+                                            n.Block(zip(value.args node.args {k v; T(n.Def(k v)) }))
+                                            T(value.body)
+                                          ])))
+                                        }()
+                                       ;
+                      c($block)     ? {;
+                                        set_last(value.body T(n.Call(last(value.body) node.args)))
+                                        value
+                                      }() ;
+                                      crash("cannot inline call")
+                    }() ;
+    c($block)     ? n.Block(map(node.body T)) ;
+    c($if)        ? n.If(T(node.left) T(node.mid) T(node.right));
+    c($and)       ? n.And(T(node.left) T(node.right));
+    c($or)        ? n.Or(T(node.left) T(node.right));
+    c($fun)       ? n.Fun(node.args T(node.body)) ;
+                    node
   }
   T(node)
 }

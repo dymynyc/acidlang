@@ -1,20 +1,12 @@
 n: import("./nodes")
 EQ: {x; {y; eq(x y) }}
 a: import("./arrays")
-map: a.map each_iv: a.each_iv
-
-concat_ary: {a b;
-  eq(a nil) ? b ; {;
-    c: createArray(add(a.length b.length))
-    each_iv(a {v i; c.[i] = v c})
-    each_iv(b {v i; c.[add(a.length i)] = v c})
-    c
-  }() 
-}
+map: a.map each_iv: a.each_iv concat_ary:a.concat_ary
 
 transform: {node data fn;
     c:EQ(node.type)
     T:{node; transform(node data fn)}
+    eq(node nil)? nil;
     neq(nil v:fn(node data {node data; transform(node data fn)}))
                 ? v ;
     c($def)     ? n.Def(node.left T(node.right)) ;

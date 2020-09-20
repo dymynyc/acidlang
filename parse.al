@@ -57,7 +57,7 @@ boolean_: Wrap(And(json.boolean Not(azAZ_09)) $boolean)
 string_:  Wrap(json.string $string)
 number_:  Wrap(json.number $number)
 
-sym: Text(And(azAZ_ Many(azAZ_09)) {v; createSymbol(v)})
+sym: Text(And(azAZ_ Many(azAZ_09)) {v; create_symbol(v)})
 symbol: And("$" Wrap(sym $symbol))
 variable: Wrap(sym $variable)
 args: List(variable) 
