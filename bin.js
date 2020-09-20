@@ -29,6 +29,7 @@ if(~module.parent) {
   if(cmd === 'run')
     require('./run')(toRelative(process.argv[3]), process.cwd())
   else if(cmd === 'bootstrap' || cmd === 'bootstrap1')
+    
     require('./build')
       (parse(), require('./handwritten/compile-js'))
         (process.argv.slice(3), process.cwd(), process.env.output)
@@ -45,7 +46,7 @@ if(~module.parent) {
       (parse(), require('./dist/compile-js'))
         (process.argv.slice(3), process.cwd(), process.env.output)
   else if(cmd === 'parse')
-    console.log(inspect(parse(fs.readFileSync(process.argv[3], 'utf8')), {colors: true, depth: Infinity}))
+    console.log(inspect(parse()(fs.readFileSync(process.argv[3], 'utf8')), {colors: true, depth: Infinity}))
   else
     throw new Error('unknown command:'+cmd)
 }
