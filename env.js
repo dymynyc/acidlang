@@ -18,7 +18,7 @@ module.exports = Object.freeze({
   createArray: function (n) {
     return new Array(n)
   },
-  createSymbol: function (s) {
+  create_symbol: function (s) {
     return $(s)
   },
   // has: function (object, key) {
@@ -28,6 +28,7 @@ module.exports = Object.freeze({
   sub: function (a, b) { return a - b },
   and: function (a, b) { return a & b },
   mul: function (a, b) { return a * b },
+  not: function (a)    { return a === false },
   eq:  function (a, b) { return a === b },
   neq: function (a, b) { return a !== b },
   gt:  function (a, b) { return a >  b },
@@ -48,7 +49,7 @@ module.exports = Object.freeze({
   create_object: function (kvs) {
     var obj = {}
     for(var i = 0; i < kvs.length; i++)
-      obj[kvs[i].key.value.description] = kvs[i].value
+      obj[kvs[i].key.description] = kvs[i].value
     return obj
   },
   crash: function (message) {
