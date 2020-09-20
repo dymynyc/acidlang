@@ -66,6 +66,7 @@ function tests (parsers) {
     console.log("parse:", inputs[i])
     var results = []
     for(var k in parsers) {
+      console.log(k)
       var v = parsers[k](inputs[i])
       console.log(inspect(v, {depth: Infinity, colors: true}))
       results.push(v)
