@@ -1,7 +1,7 @@
 var assert = require('assert')
 var data = require('./data/expressions')
 var parse = require('../dist/parse.js')()
-var copy = require('../dist/copy').copy
+var copy = require('../dist/transform').copy
 var _inspect = require('util').inspect
 function inspect (v) {
   return _inspect(v, {colors: false, depth: Infinity})
