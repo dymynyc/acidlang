@@ -86,7 +86,7 @@ args: List(variable)
       {
         type: $fun
         args: fun.[0]
-        body: gt(fun.length 0) ? fun.[1] ; nil_node
+        body: neq(nil fun.[1]) ? fun.[1] ; nil_node
         scope: nil
         name: nil
       }
