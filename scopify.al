@@ -95,7 +95,7 @@ execute_var: n.Var(create_symbol("$execute"))
                                   concat_ary([fn.value.scope] map(node.args {x; T(x scope)})))
                                 
                               }() ;
-                      {; c($variable) & not(scope.has(node.value.value)) }()
+                      {; c($var) & not(scope.has(node.value.value)) }()
                       ? n.Call(node.value map(node.args {n; T(n scope)}))
                       //otherwise, assume it's not a built-in, call execute with scope
                       ; scope_call(T(node.value scope) map(node.args {x; T(x scope)}))
@@ -109,7 +109,7 @@ execute_var: n.Var(create_symbol("$execute"))
                       node.left
                       eq(node.right nil) ? nil ; T(node.right scope)
                     ) ;
-    c($variable)  ? scope_access(scope.hasDepth(node.value) node nil) ;
+    c($var)  ? scope_access(scope.hasDepth(node.value) node nil) ;
                     nil
   })
   n.Block([

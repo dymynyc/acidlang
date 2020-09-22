@@ -27,7 +27,7 @@ get_vars:{node;
 }
 
 isCall: {node name;
-  neq(nil name) & eq(node.type $call) & eq(node.value.type $variable) & eq(node.value.value name.value)
+  neq(nil name) & eq(node.type $call) & eq(node.value.type $var) & eq(node.value.value name.value)
 }
 
 compile:{node insert;
@@ -77,7 +77,7 @@ compile:{node insert;
       c($boolean) ? [stringify(node.value)] ;
       c($number)  ? [stringify(node.value)] ;  
       c($string)  ? [stringify(node.value)] ;  
-      c($variable)? [stringify(node.value)] ;  
+      c($var)     ? [stringify(node.value)] ;  
       c($symbol)  ? ["$(" stringify(stringify(node.value)) ")"] ;
       c($nil)     ? ["null"] ;
       c($is)      ? ["true"] ;
@@ -100,7 +100,7 @@ compile:{node insert;
                        eq(node.right nil) ? "" ; concat(["=" C(node.right)])
                     ")" ] ;
       c($call)    ? [
-                      {;  eq(node.value.type $variable) & neq(insert(node.value.value nil) nil) }()
+                      {;  eq(node.value.type $var) & neq(insert(node.value.value nil) nil) }()
                       ? insert(node.value.value map(node.args C)) ;
                       concat([
                         eq(node.value.type $fun) ? concat(["(" C(node.value) ")"]) ; C(node.value)

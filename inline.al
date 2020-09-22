@@ -47,7 +47,7 @@ deblock: {node right scope;
   unique: uniquify(0)
   T: {node;
     c: EQ(node.type)
-    c($variable)  ? {; 
+    c($var)  ? {; 
       neq(nil v:scope.get(node.value)) ? v ; node }();
     c($def)       ? {;
                       {; eq(node.right.type $fun) | eq(node.right.type $object) | eq(node.right.type $array) }()
@@ -78,11 +78,11 @@ deblock: {node right scope;
     c($call)      ? {;
                       value: T(node.value)
                       c: EQ(value.type)
-                      c($variable)  ? n.Call(value map(node.args T)) ;
+                      c($var)  ? n.Call(value map(node.args T)) ;
                                       //note: uniquify when inlining a call
                                       //in case the same function is inlined twice.
                       c($fun)       ? 
-                                        {; eq(node.value.type $variable) &
+                                        {; eq(node.value.type $var) &
                                             funs.is_recursive(value node.value) }() ? node ;
                                         eq(value.args.length 0) ? {;
                                           unique(T(value.body))

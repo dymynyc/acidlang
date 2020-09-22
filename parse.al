@@ -59,7 +59,7 @@ number_:  Wrap(json.number $number)
 
 sym: Text(And(azAZ_ Many(azAZ_09)) {v; create_symbol(v)})
 symbol: And("$" Wrap(sym $symbol))
-variable: Wrap(sym $variable)
+variable: Wrap(sym $var)
 args: List(variable) 
 
 {;

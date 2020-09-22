@@ -7,7 +7,7 @@
   Array:  {v;         {type: $array   value: v}}
   Object: {v;         {type: $object  value: v}}
   
-  Var:   {k;          {type: $variable     value: k}}
+  Var:   {k;          {type: $var     value: k}}
   
   Def:   {k v;        {type: $def left: k right: v}}
   Set:   {k v;        {type: $set left: k right: v}}

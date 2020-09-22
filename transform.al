@@ -11,7 +11,7 @@ transform: {node data fn;
                 ? v ;
     c($def)     ? n.Def(node.left T(node.right)) ;
     c($set)     ? n.Set(node.left T(node.right)) ;
-    c($variable)? n.Var(node.value);
+    c($var)     ? n.Var(node.value);
     c($fun)     ? n.Fun(map(node.args T) T(node.body));    
     c($access)  ? n.Access(T(node.left) T(node.mid) neq(nil node.right) ? T(node.right) ; nil node.static);
     c($call)    ? n.Call(T(node.value) map(node.args T)) ;

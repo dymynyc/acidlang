@@ -1,6 +1,6 @@
 
 is_call: {node name;
-  neq(nil name) & eq(node.type $call) & eq(node.value.type $variable) & eq(node.value.value name.value)
+  neq(nil name) & eq(node.type $call) & eq(node.value.type $var) & eq(node.value.value name.value)
 }
 
 is_loopable: {fun name;
@@ -46,7 +46,7 @@ find: {node fn;
     c($or)       ? R(node.left) | R(node.right) ;
     c($is)       ? R(node.left) | R(node.right) ;
     c($fun)      ? find_array(node.args R) | R(node.body) ;
-    c($variable) ? false ;
+    c($var)      ? false ;
     c($symbol)   ? false ;
     c($number)   ? false ;
     c($string)   ? false ;
@@ -60,7 +60,7 @@ find: {node fn;
 is_recursive: {fun name;
   find(fun.body {node;
     eq(node.type $call)
-    & eq(node.value.type $variable)
+    & eq(node.value.type $var)
     & eq(node.value.value name.value)
   })
 }

@@ -8,7 +8,7 @@ transform: import("./transform").transform
 {counter;
   counter@i32
   unique: {scope name; scope.set(name {
-    type: $variable
+    type: $var
     value: create_symbol(cat(stringify(name) cat("_" stringify(counter = add(1 counter)))))
   })}
   get: {scope name; neq(nil v:scope.get(name.value)) ? v ; name }
@@ -18,7 +18,7 @@ transform: import("./transform").transform
       c:{x; eq(node.type x)}
       c($def)       ? n.Def(unique(scope node.left.value) R(node.right scope)) ;
       c($set)       ? n.Set(get(scope node.left) R(node.right scope)) ;
-      c($variable)  ? get(scope node);
+      c($var)  ? get(scope node);
       c($fun)       ? {;
                         _scope: HT(scope)
                         n.Fun(
