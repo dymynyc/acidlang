@@ -150,8 +150,8 @@ function ev (node, scope, allow_cyclic) {
   if(node.type === types.def) {
     //handle function defs specially, to enable recursion
     var name = node.left.value
-    if(scope.hasOwn(name.description))
-      throw new Error('variable already defined:'+name.descripton+', cannot redefine')
+    if(scope.hasOwn(name))
+      throw new Error('variable already defined:'+name.description+', cannot redefine')
     if(node.right.type === types.fun)
       return scope.set(name, bind(node.right, scope, node.left))
     else if(node.right.type === types.object) {
