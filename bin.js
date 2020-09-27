@@ -15,13 +15,14 @@ function require_eval(file) {
 
 function load(name) {
   try {
-    //use acid parser, if it has been built.
+    //compiled js
     return require('./dist/'+name)
   } catch (_) {
     try {
+      //handwritten js
       return require('./handwritten/'+name)
     } catch(_) {
-      //else load in interpreter
+      //acid interpreter
       return require_eval('./'+name)
     }
   }
