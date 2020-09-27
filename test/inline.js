@@ -61,6 +61,7 @@ function test (src) {
 //  'R:{; R()}'
 ].forEach(test)
 
+var data = require('./data/expressions').inputs.forEach(test)
 //how to handle recursive functions? if the function is loopable
 //it can be inlined as a loop. if it's still recursive it needs to be rolled out.
 //if it's rolled out, anything from our scope needs to be inlined.

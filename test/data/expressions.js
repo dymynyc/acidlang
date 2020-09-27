@@ -25,7 +25,7 @@ exports.inputs = [
   'Obj:{x:i32 y:i32 z:i32} obj:{x:1 y:1 z:1} obj@Obj',
   'a:{self:a}', //cyclic!
   'deep:{a:{b:{c:deep}}}',
- '$object'
+  '$object'
 ]
 
 function T (s, v) { return {type: s, value: v === undefined ? null : v}}
