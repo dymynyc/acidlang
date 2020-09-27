@@ -97,7 +97,7 @@ function wrappedEval (ast) {
 }
 
 function print (x) {
-  console.log('string' === typeof x ? x : inspect(x, {colors: true, depth: Infinity}))
+  console.log('string' === typeof x ? x : inspect(x, {colors: process.stdout.isTTY, depth: Infinity}))
 }
 
 module.exports = {unmapValue, mapValue, isPrimitive, bind, wrap, eval: wrappedEval, print}
