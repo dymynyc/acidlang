@@ -1,110 +1,88 @@
 HT:       import("./hashtable.js")
 a:        import("./arrays")
-map: a.map zip:a.zip
+map: a.map map_i: a.map_i zip:a.zip
 uniquify: import("./uniquify")
 funs:     import("./functions")
 n:        import("./nodes")
-
-/*
-notes: I think this might come out cleaner if A) no mutations, such as in def.
-       B) add loop node, and transform loopables to that.
-       
-       note: the reason I went with recursive only, was to make constant eval
-       easier, because it meant we could avoid mutable vars.
-       inlining a recursive loop is easier. hmm, or could I transform the loop into
-       recursion when inlining constants?
-*/
+transform: import("./transform").transform
 
 EQ: {x; {y; eq(x y) }}
-last: {ary; ary.[sub(ary.length 1)]}
-set_last: {ary value; ary.[sub(ary.length 1)] = value}
 
-//if the inlined value is a block, set value to the last value note, that might also be a block.
-update: {node value scope;
-  c:EQ(node.type)
-  //XXX: mutations
-  c($def)   ? eq(value.type $fun) ? scope.set(node.left.value node.right = value) ; node.right = value ;
-  //XXX: mutations
-  c($call)  ? node.value = value ;
-  //XXX: mutations
-  c($set)   ? node.right = value ;
-             crash("unknown node")
-}
-
+//it might be nicer to make deblock into a separate pass
+//called from this one like uniquify
 deblock: {node right scope;
-  eq(right.type $block) ? {;
-    //XXX: mutations
-    set_last(right.body deblock(node last(right.body) scope))
-    right
-  }() ; {;
-    update(node right scope)
-    node
-  }()
+  c:EQ(node.type)
+  eq(right.type $block) ? n.Block(map_i(right.body {v i;
+                            eq(i sub(right.body.length 1)) ? deblock(node v scope) ; v
+                          })) ;
+  c($def)   ? n.Def(node.left
+                //should handle objects also...
+                eq(right.type $fun) ? scope.set(node.left.value right) ; node.right
+              ) ;
+  c($call)  ? n.Call(right node.args) ;
+  c($set)   ? n.Set(node.left right) ;
+              crash("cannot deblock unknown type")
 }
 
+
+//there are definitely some unhandled cases here,
+//but it will still work, if not everything is inlined
+//things left over will be handled by scopify. just deoptimized slightly.
 {node;
   scope: HT(nil)
   unique: uniquify(0)
-  T: {node;
+  transform(unique(node) nil {node nil T2;
+    T: {x; T2(x nil)}
     c: EQ(node.type)
-    c($var)  ? {; 
-      neq(nil v:scope.get(node.value)) ? v ; node }();
-    c($def)       ? {;
-                      {; eq(node.right.type $fun) | eq(node.right.type $object) | eq(node.right.type $array) }()
-                      ? {;
-                          //NOTE: to handle loopable functions,
-                          //inline everything at define stage.
-                          //XXX: mutations
-                          scope.set(node.left.value node.right=T(node.right))
-                          node
-                        }()
-                      ; deblock(node T(node.right) scope)
-                    }() ;
-    
-    c($set)       ? deblock(node T(node.right) scope) ;
-    //XXX: mutations
-    c($object)    ? {; object_each(node.value {_ k v; node.value.[k] = T(v) }) node}() ;
-    c($array)     ? {type:$array value: map(node.value T)} ;
-    c($access)    ? {; 
-                      {; eq(nil node.right) & node.static }()
-                      ? {;
-                          //there are unhandled cases here!
-                          value:T(node.left)
-                          eq(value.type $object) ? value.value.[node.mid.value] ;
-                          n.Access(node.left T(node.mid) nil true)
-                        }()
-                      ; node
-                    }();
-    c($call)      ? {;
-                      value: T(node.value)
-                      c: EQ(value.type)
-                      c($var)  ? n.Call(value map(node.args T)) ;
-                                      //note: uniquify when inlining a call
-                                      //in case the same function is inlined twice.
-                      c($fun)       ? 
-                                        {; eq(node.value.type $var) &
-                                            funs.is_recursive(value node.value) }() ? node ;
-                                        eq(value.args.length 0) ? {;
-                                          unique(T(value.body))
-                                        }() ; {;
-                                        print(unique(n.Block([
-                                            n.Block(zip(value.args node.args {k v; T(n.Def(k v)) }))
-                                            T(value.body)
-                                          ])))
-                                        }()
-                                       ;
-                      c($block)     ? {;
-                                        set_last(value.body T(n.Call(last(value.body) node.args)))
-                                        value
-                                      }() ;
-                                      crash("cannot inline call")
-                    }() ;
-    c($block)     ? n.Block(map(node.body T)) ;
-    c($if)        ? n.If(T(node.left) T(node.mid) T(node.right));
-    c($and)       ? n.And(T(node.left) T(node.right));
-    c($or)        ? n.Or(T(node.left) T(node.right));
-    c($fun)       ? n.Fun(node.args T(node.body)) ;
-                    node
-  }
-  T(node)
+    c($var)     ? neq(nil v:scope.get(node.value)) ? v ; node ;
+    c($def)     ? {;
+                    {; eq(node.right.type $fun)
+                    | eq(node.right.type $object)
+                    | eq(node.right.type $array) }()
+                    ? {;
+                        //NOTE: to handle loopable functions,
+                        //inline everything at define stage.
+                        //XXX: mutations
+                        scope.set(node.left.value node.right=T(node.right))
+                        node
+                      }()
+                    ; deblock(node T(node.right) scope)
+                  }() ;
+    c($access)  ? {;
+                    {; eq(nil node.right) & node.static }()
+                    ? {;
+                        //there are unhandled cases here!
+                        value:T(node.left)
+                        eq(value.type $object) ? value.value.[node.mid.value] ;
+                        n.Access(node.left T(node.mid) nil true)
+                      }()
+                    ; node
+                  }() ;
+    c($call)    ? {;
+                    value: T(node.value)
+                    c: EQ(value.type)
+                    //calling a built in
+                    c($var)   ? n.Call(value map(node.args T)) ;
+                                //note: uniquify when inlining a call
+                                //in case the same function is inlined twice.
+
+                    c($fun)   ? funs.is_recursive(value node.value)
+                                                        ? n.Call(node.value map(node.args T)) ;
+                                eq(value.args.length 0) ? unique(T(value.body)) ;
+                                unique(n.Block([
+                                    n.Block(zip(value.args node.args {k v; T(n.Def(k v)) }))
+                                    T(value.body)
+                                  ])) ;
+
+                    c($block) ? n.Block(
+                                  //don't map each item because it was already inlined.
+                                  map_i(value.body {v i;
+                                    eq(i sub(value.body.length 1)) ? T(n.Call(v map(node.args T))) ; v
+                                  })
+                                ) ;
+                    //fall through and just copy the call
+                                nil
+                  }() ;
+                  nil    
+  })
 }
