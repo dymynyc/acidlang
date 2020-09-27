@@ -41,9 +41,9 @@ module.exports = function (parse, compile) {
         import: function (req) {
           return build(JSON.parse(req), path.dirname(target))
         },
-        print: function (x) {
-          return '(x=>(console.log(x),x))('+x+')'
-        },
+        // print: function (x) {
+          // return '(x=>(console.log(x),x))('+x+')'
+        // },
         __proto__: scope
       }
       

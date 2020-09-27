@@ -45,6 +45,7 @@ module.exports = Object.freeze({
   lte: function (a, b) { return a <= b },
   i32: {type: types.type, value: types.number},
   print: function (s) {
+    var inspect = require('util').inspect
     console.log(inspect(s, {colors: true, depth: Infinity}))
     return s
   },
