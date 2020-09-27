@@ -8,8 +8,9 @@
     "url": "git://github.com/dymynyc/acidlang.git"
   },
   "dependencies": {
+    "minimist": "^1.2.5",
     "mkdirp": "^1.0.4",
-    "stack-expression": "3.0.1"
+    "stack-expression": "^3.0.2"
   },
   "devDependencies": {
     "tape": "^5.0.1"
