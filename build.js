@@ -19,7 +19,11 @@ module.exports = function (parse, compile) {
       var rel = path.relative(context, target)
       var outfile = path.join(output, path.relative(context, rel.substring(0, rel.length - path.extname(rel).length) + '.js'))
       if('.js'  === path.extname(target)) {
-        return 'require('+JSON.stringify(toRelative(path.relative(path.dirname(outfile), target)))+')/*direct js*/'
+        return 'require('+JSON.stringify(
+          module[0]==='.'
+          ? toRelative(path.relative(path.dirname(outfile), target))
+          : module
+        )+')/*direct js*/'
       }
       var relfrom = path.relative(context, from) //where the parent module will end up
       var outfrom = path.join(output, relfrom)
