@@ -3,16 +3,16 @@ each:{ary reduce init;
   R(init 0)}
 
 each_iv:{ary fn;
-  R: {i; lt(i ary.length) ? {; fn(ary.[i] i) R(add(1 i)) }() ; ary }
-  R(0)
+  R: {i v; lt(i ary.length) ? R(add(1 i) fn(ary.[i] i)) ; ary }
+  R(0 nil)
 }
 
 join:{a str; each(a {acc item; eq(acc "") ? item ; concat([acc str item])} "")}
 
 map:{ary map;
   len: ary.length _ary: createArray(len)
-  R: {i; lt(i len) ? {; _ary.[i] = map(ary.[i]) R(add(1 i))}() ; _ary}
-  R(0)
+  R: {i v; lt(i len) ? R(add(1 i) _ary.[i] = map(ary.[i])) ; _ary}
+  R(0 nil)
 }
 
 map_i:{ary map;
