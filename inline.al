@@ -4,7 +4,7 @@ map: a.map map_i: a.map_i zip:a.zip
 uniquify: import("./uniquify")
 funs:     import("./functions")
 n:        import("./nodes")
-transform: import("./transform").transform
+transform: import("./ast").transform
 
 EQ: {x; {y; eq(x y) }}
 

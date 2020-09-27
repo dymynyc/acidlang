@@ -3,7 +3,7 @@ a:  import("./arrays")
 each: a.each map: a.map concat_ary:a.concat_ary concat:a.concat
 n:  import("./nodes")
 
-transform: import("./transform").transform
+transform: import("./ast").transform
 
 //acid syntax does not allow $ in variable names
 //so we don't need to worry about these colliding

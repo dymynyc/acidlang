@@ -3,7 +3,7 @@ a:  import("./arrays")
 each: a.each map: a.map
 n:  import("./nodes")
 
-transform: import("./transform").transform
+transform: import("./ast").transform
 
 {counter;
   counter@i32
@@ -23,6 +23,7 @@ transform: import("./transform").transform
 
   {node;
     transform(node HT(nil) {node scope R;
+      print(["U" node])
       c:{x; eq(node.type x)}
       T:{x; eq(x nil) ? nil ; R(x scope)}
       c($def)       ? n.Def(unique(scope node.left.value) R(node.right scope)) ;
