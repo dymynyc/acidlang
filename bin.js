@@ -2,13 +2,40 @@
 var fs = require('fs')
 var path = require('path')
 var env = require('./env')
-var parse
-try {
-  //use acid parser, if it has been built.
-  parse = require('./dist/parse')
-} catch (_) {
-  parse = require('./handwritten/parse')
+var minimist = require('minimist')
+var print = require('./util').print
+
+function toRelative(s) {
+  return './' + path.normalize('./'+ s)
 }
+var run = require('./run')
+function require_eval(file) {
+  return run(toRelative(file), process.cwd())
+}
+
+function load(name) {
+  try {
+    //use acid parser, if it has been built.
+    return require('./dist/'+name)
+  } catch (_) {
+    try {
+      return require('./handwritten/'+name)
+    } catch(_) {
+      //else load in interpreter
+      return require_eval('./'+name)
+    }
+  }
+  
+}
+var parse = load('parse')
+var inline = load('inline')
+var scopify = load('scopify')
+// try {
+  // //use acid parser, if it has been built.
+  // parse = require('./dist/parse')
+// } catch (_) {
+  // parse = require('./handwritten/parse')
+// }
 var ev = require('./eval')
 var HT = require('./hashtable')
 var {inspect} = require('util')
@@ -19,34 +46,43 @@ var {wrap, mapValue, unmapValue} = require('./util')
 //var compile = require('./compile-js')
 var $ = require('./symbols')
 
-function toRelative(s) {
-  return './' + path.normalize('./'+ s)
+function Transformer (opts) {
+  return function (compile) {
+    return function (ast, insert) {
+      console.log("AST", ast)
+      ast = opts.inline  === true ? inline(ast) : ast
+      ast = opts.scopify === true ? scopify(ast) : ast
+      return compile(ast, insert)
+    }
+  }
 }
 
-
 if(~module.parent) {
-  var cmd = process.argv[2]
+  var opts = minimist(process.argv.slice(2))
+  var cmd = opts._[0]
+  var files = opts._.slice(1)
+  var tr = Transformer(opts)
   if(cmd === 'run')
-    require('./run')(toRelative(process.argv[3]), process.cwd())
+    require_eval(files[0])
   else if(cmd === 'bootstrap' || cmd === 'bootstrap1')
     
     require('./build')
-      (parse(), require('./handwritten/compile-js'))
-        (process.argv.slice(3), process.cwd(), process.env.output)
+      (parse(), tr(require('./handwritten/compile-js')))
+        (files, process.cwd(), process.env.output)
   else if(cmd === 'bootstrap2')
     require('./build')
-      (parse(), require('./bootstrap/compile-js'))
-        (process.argv.slice(3), process.cwd(), process.env.output)
+      (parse(), tr(require('./bootstrap/compile-js')))
+        (files, process.cwd(), process.env.output)
   else if(cmd === 'bootstrap3')
     require('./build')
-      (parse(), require('./bootstrap2/compile-js'))
-        (process.argv.slice(3), process.cwd(), process.env.output)
+      (parse(), tr(require('./bootstrap2/compile-js')))
+        (files, process.cwd(), process.env.output)
   else if(cmd === 'build')
     require('./build')
-      (parse(), require('./dist/compile-js'))
-        (process.argv.slice(3), process.cwd(), process.env.output)
+      (parse(), tr(require('./dist/compile-js')))
+        (files, process.cwd(), process.env.output)
   else if(cmd === 'parse')
-    console.log(inspect(parse()(fs.readFileSync(process.argv[3], 'utf8')), {colors: true, depth: Infinity}))
+    print(tr(x=>x)(parse()(fs.readFileSync(process.argv[3], 'utf8'))))
   else
     throw new Error('unknown command:'+cmd)
 }
