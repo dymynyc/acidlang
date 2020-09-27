@@ -26,13 +26,12 @@ find_array: {ary fn;
 }
 
 find_object: {obj fn;
-  object_each(obj {s k v; s | fn(k v) } false)
+  object_each(obj {s k v; s | fn(v) } false)
 }
 //inline fn, find_array then roll out R
 find: {node fn;
   R:{node;
     c:EQ(node.type)
-    
     fn(node)     ? true ;
     c($set)      ? R(node.left) | R(node.right) ;
     c($def)      ? R(node.left) | R(node.right) ;
