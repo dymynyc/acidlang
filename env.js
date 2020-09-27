@@ -10,6 +10,14 @@ module.exports = Object.freeze({
     if('string' !== typeof b) throw new Error('cat: b *must* be a string, was:'+inspect(b))
     return a+b
   },
+  index_of: function (a, b) {
+    if('string' !== typeof a) throw new Error('cat: a *must* be a string, was:'+inspect(a))
+    if('string' !== typeof b) throw new Error('cat: b *must* be a string, was:'+inspect(b))
+    return a.indexOf(b)
+  },
+  substring: function (a, start, end) {
+    return a.substring(start, end)
+  },
   charCodeAt: function (string, i) {
     if('string' !== typeof string) throw new Error('must be string')
     if('number' !== typeof i) throw new Error('must be integer')
