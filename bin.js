@@ -50,7 +50,6 @@ var $ = require('./symbols')
 function Transformer (opts) {
   return function (compile) {
     return function (ast, insert) {
-      console.log("AST", ast)
       ast = opts.inline  === true ? inline(ast) : ast
       ast = opts.scopify === true ? scopify(ast) : ast
       return compile(ast, insert)
