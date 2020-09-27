@@ -15,8 +15,8 @@ _1: Or(" " "\t" "\n" "\r\n" comment multicomment)
 __: More(_1)
 _:  Many(_1)
 
+id:{x;x}
 List:{val map; Group(Maybe(Join(val __)) map)}
-
 OpenClose: {op item cl map; And(op _ List(item map) _ cl)}
 
 Extend: {prefix extender reduce;
@@ -29,7 +29,7 @@ Extend: {prefix extender reduce;
   }
 }
 
-Map: {rule mapper type;
+Map: {rule mapper;
   {input start end group;
     rule(input start end {v; group(mapper(v))}) } }
     
@@ -39,7 +39,7 @@ toBlock: {body;
                       body.[0]
 }
 Wrap: {rule type; Map(rule {value; {type: type value: value}})}
-WrapInfix: {rule type; Map(rule {value; {type: type left: null right: value}})}
+WrapInfix: {rule type; Map(rule {value; {type: type left: nil right: value}})}
 
 Range: {lo hi;
   lc: charCodeAt(lo 0) hc: charCodeAt(hi 0)
@@ -60,7 +60,7 @@ number_:  Wrap(json.number $number)
 sym: Text(And(azAZ_ Many(azAZ_09)) {v; create_symbol(v)})
 symbol: And("$" Wrap(sym $symbol))
 variable: Wrap(sym $var)
-args: List(variable) 
+args: List(variable id) 
 
 {;
   
