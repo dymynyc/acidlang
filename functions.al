@@ -58,6 +58,7 @@ find: {node fn;
 }
 
 is_recursive: {fun name;
+  eq(name.type $var) &
   find(fun.body {node;
     eq(node.type $call)
     & eq(node.value.type $var)
