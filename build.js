@@ -7,7 +7,7 @@ var {inspect} = require('util')
 var resolve = require('./resolve')('node_modules', '.al', JSON.parse, "package.json")
 
 function toRelative(s) {
-  return './' + path.normalize('./'+ s)
+  return (/^\.\./.test(s) ? '' : './') + path.normalize('./'+ s)
 }
 
 module.exports = function (parse, compile) {
@@ -16,13 +16,15 @@ module.exports = function (parse, compile) {
     function build(module, from) {
       var used = {}
       var target = resolve(module, from)
-      if('.js'  === path.extname(target)) return 'require('+JSON.stringify(module)+')/*direct js*/'
       var rel = path.relative(context, target)
       var outfile = path.join(output, path.relative(context, rel.substring(0, rel.length - path.extname(rel).length) + '.js'))
-      mkdirp.sync(path.dirname(outfile))
+      if('.js'  === path.extname(target)) {
+        return 'require('+JSON.stringify(toRelative(path.relative(path.dirname(outfile), target)))+')/*direct js*/'
+      }
       var relfrom = path.relative(context, from) //where the parent module will end up
       var outfrom = path.join(output, relfrom)
       var outrel = rel.substring(0, rel.length - path.extname(rel).length) + '.js'
+      mkdirp.sync(path.dirname(outfile))
       if(sources[target]) return 'require('+JSON.stringify(toRelative(outrel))+')/*compiled al*/'
       sources[target] = true
 
