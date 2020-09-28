@@ -1,6 +1,7 @@
 var assert  = require('assert')
 var parse   = require('../dist/parse')()
-var ev      = require('../eval')
+var ev      = require('../handwritten/eval')
+var acid_ev = require('../dist/eval')
 var inspect = require('util').inspect
 var compile = require('../handwritten/compile-js')
 var types   = require('../types')
@@ -40,8 +41,10 @@ for(var i = 0; i < inputs.length; i++) {
     var v = ev(ast, HT(new Map(Object.entries(scope))))
     console.log("VAL", v)
     assert.deepEqual(v, outputs[i])
+    var v2 = acid_ev(ast, HT(new Map(Object.entries(scope))))
+    //console.log('v2?',v2, outputs[i])
+    assert.deepEqual(v2, outputs[i])
     
-    //TEMP disable checker
     if(true) {
       var type = check(ast, HT(new Map(Object.entries(type_scope))))
       console.log("TYP", type)

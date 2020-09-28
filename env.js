@@ -3,14 +3,18 @@ var $ = require('./symbols')
 var inspect = require('util').inspect
 module.exports = Object.freeze({
   stringify: function (x) {
+    var inspect = require('util').inspect
+    if(x && 'object' == typeof x) throw new Error('must not stringify object:'+inspect(x))
     return 'symbol' === typeof x ? x.description : JSON.stringify(x)
   },
   cat: function (a, b) {
+    var inspect = require('util').inspect
     if('string' !== typeof a) throw new Error('cat: a *must* be a string, was:'+inspect(a))
     if('string' !== typeof b) throw new Error('cat: b *must* be a string, was:'+inspect(b))
     return a+b
   },
   index_of: function (a, b) {
+    var inspect = require('util').inspect
     if('string' !== typeof a) throw new Error('cat: a *must* be a string, was:'+inspect(a))
     if('string' !== typeof b) throw new Error('cat: b *must* be a string, was:'+inspect(b))
     return a.indexOf(b)
@@ -24,6 +28,9 @@ module.exports = Object.freeze({
     return string.charCodeAt(i)
   },
   createArray: function (n) {
+    return new Array(n)
+  },
+  create_array: function (n) {
     return new Array(n)
   },
   create_symbol: function (s) {
@@ -49,6 +56,9 @@ module.exports = Object.freeze({
     console.log(inspect(s, {colors: true, depth: Infinity}))
     return s
   },
+  object_keys: function (obj) {
+    return Object.keys(obj).map($)
+  },
   object_each: function object_each(obj, fn, acc) {
     for(var k in obj) {
       acc = fn(acc, $(k), obj[k])
@@ -63,6 +73,12 @@ module.exports = Object.freeze({
   },
   crash: function (message) {
     throw new Error(message)
+  },
+  is_function: function (fn) {
+    return 'function' === typeof fn
+  },
+  call_function: function (fn, args) {
+    return fn.apply(null, args)
   },
   $: $
 })

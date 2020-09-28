@@ -73,6 +73,7 @@ module.exports = function () {
 
   var variable = Text(/^[a-zA-Z_][a-zA-Z0-9_]*/, (text) => ({type: types.variable, value: $(text) }))
   var symbol = And('$', Text(/^[a-zA-Z_][a-zA-Z0-9_]*/, (text) => ({type: types.symbol, value: $(text) })))
+  var implied_symbol = Text(/^[a-zA-Z_][a-zA-Z0-9_]*/, (text) => ({type: types.symbol, value: $(text) }))
 
   //function args can only be a symbols, so don't need to be wrapped.
   var args = List(variable) //Group(Maybe(Join(variable, __)))
@@ -86,7 +87,7 @@ module.exports = function () {
     var assignment = Maybe(And(_, '=', _, value))
 
     var access = And('.', _, Or(
-      Group(And(variable, assignment), (args) => ({type: types.access, left: null, mid: args[0], right: args[1] || null, static: true})),
+      Group(And(implied_symbol, assignment), (args) => ({type: types.access, left: null, mid: args[0], right: args[1] || null, static: true})),
       Group(And('[', _, value, _, ']', assignment), (args) => ({type: types.access, left: null, mid: args[0], right: args[1] || null, static: false}))
     ))
  

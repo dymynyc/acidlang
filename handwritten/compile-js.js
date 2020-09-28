@@ -90,7 +90,7 @@ function compile(node, insert) {
     }
     if(type === types.access) {
       return C(node.left)+(
-          node.static ? '.'+C(node.mid) : '[' + C(node.mid) + ']'
+          node.static ? '.'+node.mid.value.description : '[' + C(node.mid) + ']'
         )+(node.right?'='+C(node.right):'')
     }
     if(type === types.is) //assume this has been handled by the type checker

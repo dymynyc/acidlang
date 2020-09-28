@@ -32,13 +32,13 @@ var parse = load('parse')
 var inline = load('inline')
 var scopify = load('scopify')
 var vars = load('vars')
+var ev = load('eval')
 // try {
   // //use acid parser, if it has been built.
   // parse = require('./dist/parse')
 // } catch (_) {
   // parse = require('./handwritten/parse')
 // }
-var ev = require('./eval')
 var HT = require('./hashtable')
 var {inspect} = require('util')
 var resolve = require('./resolve')('node_modules', '.al', JSON.parse, "package.json")

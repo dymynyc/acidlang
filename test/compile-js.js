@@ -14,7 +14,7 @@ var run = require('../run')
 var scope = require('../env')
 
 
-var ev = require('../eval')
+var ev = require('../handwritten/eval')
 
 function ev_js(src, scope) {
   var keys = Object.keys(scope).concat('$')
@@ -41,6 +41,7 @@ function test(name, compiler) {
   data.inputs.forEach(function (v, i) {
     console.log('input :', v)
     var ast2 = parse(v) //'{a b; x:add(a b)}')
+    console.log(ast2)
     var dst = compiler(ast2, nop)
     console.log('output:', dst)
     var v = ev_js(dst, scope)

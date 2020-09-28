@@ -1,6 +1,7 @@
 var hand_parser = require('../handwritten/parse')()
 var boot_parser = require('../bootstrap/parse')()
 var acid_parser = require('../dist/parse')()
+//var ev_parser = require('../run')('../parse', __dirname)
 var assert = require('assert')
 var fs = require('fs')
 var path = require('path')

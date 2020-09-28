@@ -1,7 +1,7 @@
 var run = require('../run')
 var {print, eval:ev} = require('../util')
 var parse = require('../handwritten/parse')()
-var uniquify = run('../uniquify', __dirname)
+//var uniquify = run('../uniquify', __dirname)
 var inline = run('../inline', __dirname)
 var compile = run('../compile-js', __dirname)
 var assert = require('assert')
@@ -20,9 +20,9 @@ function test (src) {
   //print(uniquify(0)(ast))
   console.log("INLINE")
   ast = inline(ast)
-   print(ast)
-  assert.deepEqual(ev(ast), result, 'inline should not change meaning')
+  print(ast)
   console.log(compile(ast, nop))
+  assert.deepEqual(ev(ast), result, 'inline should not change meaning')
 }
 
 ;[

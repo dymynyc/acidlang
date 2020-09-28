@@ -1,7 +1,9 @@
-var types = require('./types')
-var HT = require('./hashtable')
-var inspect = require('util').inspect
-
+var types = require('../types')
+var HT = require('../hashtable')
+var _inspect = require('util').inspect
+function inspect(v) {
+  return _inspect(v, {colors: true, depth: Infinity})
+}
 function isPrimitive (node) {
   return (
     node.type === types.number ||
@@ -189,14 +191,18 @@ function ev (node, scope, allow_cyclic) {
     if(left.type === types.object) {
       if(!left.value[key.value.description])
         throw new Error('object did not have property:'+node.mid.value.description+', on:'+inspect(left))
-      return !node.right ? left.value[key.value.description]
-                         : left.value[key.value.description] = ev(node.right, scope)
+      if(node.right != null) {
+        var value = ev(node.right, scope)
+        var _value = left.value[key.value.description] = value
+        return _value
+      }
+      return left.value[key.value.description]
     }
     else if(left.type === types.array) {
       if(key.type === types.number && (key.value > left.value.length || key.value < 0)) {
         return {type: types.nil, value: null}
       }
-      else if(key.type === types.variable) {
+      else if(key.type === types.symbol) {
           if(key.value !== types.length)
             throw new Error('cannot access property:'+key.value.description+' on array, only length')
           if(node.right)

@@ -31,19 +31,22 @@ deblock: {node right scope;
 {node;
   scope: HT(nil)
   unique: uniquify(0)
-  uniquify(0)(transform(unique(node) nil {node nil T2;
+  //uniquify(0)(
+  transform(unique(node) nil {node nil T2;
     T: {x; T2(x nil)}
     c: EQ(node.type)
     c($var)     ? neq(nil v:scope.get(node.value)) ? v ; node ;
     c($def)     ? {;
                     {; eq(node.right.type $fun)
-                    | eq(node.right.type $object)
-                    | eq(node.right.type $array) }()
+//                    | eq(node.right.type $object)
+//                    | eq(node.right.type $array)
+                    }()
                     ? {;
                         //NOTE: to handle loopable functions,
                         //inline everything at define stage.
                         //XXX: mutations
-                        scope.set(node.left.value node.right=T(node.right))
+                        //scope.set(node.left.value node.right=T(node.right))
+                        scope.set(node.left.value T(node.right))
                         nil
                       }()
                     ; deblock(node T(node.right) scope)
@@ -84,5 +87,5 @@ deblock: {node right scope;
                                 nil
                   }() ;
                   nil    
-  }))
+  })//)
 }

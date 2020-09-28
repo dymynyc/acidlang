@@ -1,3 +1,8 @@
+// find: {ary test; 
+ // R: {i; {;lt(i ary.length) & eq(false test(ary.[i]))}() ? R(add(1 i)) ; i}
+ // R(0)}
+// }
+
 each:{ary reduce init;
   R: {acc i; lt(i ary.length) ? R(reduce(acc ary.[i]) add(1 i)) ; acc}
   R(init 0)}
@@ -23,7 +28,6 @@ map_i:{ary map;
 }
 
 concat:{ary; eq(ary.length 0) ? ary.[0] ; each(ary {a b; cat(a b)} "")}
-
 
 concat_ary: {a b;
   eq(a nil) ? b ; eq(b nil) ? a ; {;

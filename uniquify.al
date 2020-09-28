@@ -23,7 +23,6 @@ transform: import("./ast").transform
 
   {node;
     transform(node HT(nil) {node scope R;
-      print(["U" node])
       c:{x; eq(node.type x)}
       T:{x; eq(x nil) ? nil ; R(x scope)}
       c($def)       ? n.Def(unique(scope node.left.value) R(node.right scope)) ;

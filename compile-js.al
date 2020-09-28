@@ -96,7 +96,7 @@ compile:{node insert;
       c($and)     ? ["(" C(node.left) " ? " C(node.right) " : false )"] ;
       c($or)      ? ["(" C(node.left) " ? true : " C(node.right) ")"] ;
       c($access)  ? ["(" C(node.left)
-                       concat(node.static ? ["." C(node.mid)] ; ["[" C(node.mid) "]"])
+                       concat(node.static ? ["." stringify(node.mid.value)] ; ["[((x)=>'symbol'===typeof x?x.description:x)(" C(node.mid) ")]"])
                        eq(node.right nil) ? "" ; concat(["=" C(node.right)])
                     ")" ] ;
       c($call)    ? [

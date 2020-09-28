@@ -1,7 +1,10 @@
 var types = require('./types')
 var inspect = require('util').inspect
-var ev = require('./eval')
+var ev = require('./handwritten/eval')
 var HT = require('./hashtable')
+
+var wmap = new Map()
+var _wmap = new Map()
 
 function isPrimitive (node) {
   return (
@@ -13,10 +16,22 @@ function isPrimitive (node) {
   )
 }
 
-//TODO: support cyclic
 function unmapValue(v) {
+  if(_wmap.has(v)) {
+  //  console.log("unmap", v, _wmap.get(v))
+//    return _wmap.get(v)
+  }
+  var _v = _unmapValue(v)
+  _wmap.set(v, _v)
+  if(_v && 'object' === typeof _v)
+    wmap.set(_v, v)
+  return _v
+}
+function _unmapValue(v) {
   if(v.type === types.object) {
     var obj = {}
+    _wmap.set(v, obj)
+    wmap.set(obj, v)
     for(var k in v.value)
       obj[k] = unmapValue(v.value[k])
     return Object.seal(obj)
@@ -42,28 +57,38 @@ function unmapValue(v) {
     throw new Error('cannot unmap node:'+inspect(v))
   }
 }
-//TODO: support cyclic
-function mapValue (ast) {
-  if('number' === typeof ast)
-    return {type: types.number, value: ast}
-  if('symbol' === typeof ast)
-    return {type: types.symbol, value: ast}
-  if('string' === typeof ast)
-    return {type: types.string, value: ast}
-  if('boolean' === typeof ast)
-    return {type: types.boolean, value: ast}
-  if(null === ast)
+
+function mapValue (value) {
+  if('undefined' === typeof value)
+    throw new Error('cannot unmap undefined')
+  if('number' === typeof value)
+    return {type: types.number, value: value}
+  if('symbol' === typeof value)
+    return {type: types.symbol, value: value}
+  if('string' === typeof value)
+    return {type: types.string, value: value}
+  if('boolean' === typeof value)
+    return {type: types.boolean, value: value}
+  if(null === value)
     return {type: types.nil, value: null}
-  if(Array.isArray(ast))
-    return {type: types.array, value: ast.map(mapValue)}
-  //must be object...
-  if('function' === typeof ast) {
-    return wrap(ast)
+  
+  //if(wmap.has(value)) return wmap.get(value)
+  
+  if(Array.isArray(value)) {
+    var a = {type: types.array, value: null}
+    wmap.set(value, a)
+    a.value = value.map(mapValue)
+    return a
   }
-  var obj = {}
-  for(var k in ast)
-    obj[k] = mapValue(ast[k])
-  return {type: types.object, value: obj}
+  //must be object...
+  if('function' === typeof value) {
+    return wrap(value)
+  }
+  var obj = {type: types.object, value: {}}
+  wmap.set(value, obj)
+  for(var k in value)
+    obj.value[k] = mapValue(value[k])
+  return obj
 }
 
 function bind (fn, scope, name) {

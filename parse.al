@@ -59,6 +59,7 @@ number_:  Wrap(json.number $number)
 
 sym: Text(And(azAZ_ Many(azAZ_09)) {v; create_symbol(v)})
 symbol: And("$" Wrap(sym $symbol))
+implied_symbol: Wrap(sym $symbol)
 variable: Wrap(sym $var)
 args: List(variable id) 
 
@@ -73,7 +74,7 @@ args: List(variable id)
     assignment: Maybe(And(_ "=" _ value))
 
     access: And("." _ Or(
-      Group(And(variable assignment) {args;
+      Group(And(implied_symbol assignment) {args;
         {type: $access left: nil mid: mid: args.[0] right: eq(args.length 2) ? args.[1] ; nil static: true}})
       Group(And("[" _ value _ "]" assignment) {args;
         {type: $access left: nil mid: args.[0] right: eq(args.length 2) ? args.[1] ; nil static: false}})
