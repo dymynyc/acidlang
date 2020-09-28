@@ -4,7 +4,6 @@ a: import("./arrays")
 map: a.map each_iv: a.each_iv concat_ary:a.concat_ary
 
 each:{ary reduce init;
-  
   R: {acc i; lt(i ary.length) ? R(reduce(acc ary.[i]) add(1 i)) ; acc}
   R(init 0)}
 
@@ -20,9 +19,41 @@ find_object: {obj fn;
 
 //inline fn, find_array then roll out R
 //if returns true, then stops traversing
+_each: {ary fn; each(ary {s v; fn(v) } nil)}
+
+traverse: {node data fn;
+  T:{node data;
+    c:EQ(node.type)
+    R: {node; T(node data)}
+    eq(true fn(node data T)) ? nil ;
+    
+    c($set)      ? {; R(node.left) R(node.right) }();
+    c($def)      ? {; R(node.left) R(node.right) }();
+    c($block)    ? _each(node.body R) ;
+    c($array)    ? _each(node.value R) ;
+    c($object)   ? object_each(node.value {_ k v; R(v)} nil) ;
+    c($call)     ? {; R(node.value) _each(node.args R) }() ;
+    c($access)   ? {; R(node.left) R(node.mid) neq(nil node.right) & R(node.right)}();
+    c($if)       ? {; R(node.left) R(node.mid) R(node.right) }() ;
+    c($and)      ? {; R(node.left) R(node.right) }() ;
+    c($or)       ? {; R(node.left) R(node.right) }() ;
+    c($is)       ? {; R(node.left) R(node.right) }() ;
+    c($fun)      ? {; _each(node.args R) R(node.body) }();
+    c($var)      ? nil ;
+    c($symbol)   ? nil ;
+    c($number)   ? nil ;
+    c($string)   ? nil ;
+    c($boolean)  ? nil ;
+    c($nil)      ? nil ;
+                   crash("unknown node")
+  }
+  T(node data)
+}
+
 find: {node fn;
   R:{node;
     c:EQ(node.type)
+
     fn(node)     ? true ;
     c($set)      ? R(node.left) | R(node.right) ;
     c($def)      ? R(node.left) | R(node.right) ;
@@ -46,6 +77,7 @@ find: {node fn;
   }
   R(node)
 }
+
 
 
 transform: {node data fn;
@@ -84,5 +116,6 @@ transform: {node data fn;
 {
   copy: {node; transform(node nil {;})}
   transform: transform
+  traverse: traverse
   find: find
 }
