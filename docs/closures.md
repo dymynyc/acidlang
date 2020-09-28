@@ -151,4 +151,18 @@ I think if I got this transform working, it would be easy to compile to wasm.
 I could run it after a more conservative inlining. That would be much faster.
 Another improvement would be to only scopeify the variables that are actually accessed.
 
+---
 
+So, it now looks like I have scopification working, and inlining. 
+but if I inline first then scopify, it will generate many local vars
+which will then get added to local scope object. It would be much better
+to analyze which variables are actually needed in the scope, because most won't be.
+
+So maybe the right idea is to traverse the ast and identify all the scopes.
+variable scope is static, so it can be checked at compile time.
+javascript can't do that because of eval. strict mode doesn't disable eval!
+that really seems like an oversight.
+
+So each function has a metadata property which will have a list
+of variables created, scoped, mutated, then scopify can just check if a given
+variable belongs to the parent scope, etc.
