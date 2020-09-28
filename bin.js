@@ -31,6 +31,7 @@ function load(name) {
 var parse = load('parse')
 var inline = load('inline')
 var scopify = load('scopify')
+var vars = load('vars')
 // try {
   // //use acid parser, if it has been built.
   // parse = require('./dist/parse')
@@ -43,15 +44,15 @@ var {inspect} = require('util')
 var resolve = require('./resolve')('node_modules', '.al', JSON.parse, "package.json")
 var {wrap, mapValue, unmapValue} = require('./util')
 
-//var compile = require('./handwritten/compile-js')
-//var compile = require('./compile-js')
 var $ = require('./symbols')
 
 function Transformer (opts) {
   return function (compile) {
     return function (ast, insert) {
-      ast = opts.inline  === true ? inline(ast) : ast
+      ast = opts.inline  === true ? inline(ast)  : ast
       ast = opts.scopify === true ? scopify(ast) : ast
+      ast = opts.vars    === true ? vars(ast)    : ast
+
       return compile(ast, insert)
     }
   }
