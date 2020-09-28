@@ -44,7 +44,7 @@ deblock: {node right scope;
                         //inline everything at define stage.
                         //XXX: mutations
                         scope.set(node.left.value node.right=T(node.right))
-                        node
+                        nil
                       }()
                     ; deblock(node T(node.right) scope)
                   }() ;
@@ -80,7 +80,7 @@ deblock: {node right scope;
                                     eq(i sub(value.body.length 1)) ? T(n.Call(v map(node.args T))) ; v
                                   })
                                 ) ;
-                    //fall through and just copy the call
+                                //fall through and just copy the call
                                 nil
                   }() ;
                   nil    
